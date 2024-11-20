@@ -59,3 +59,10 @@ Ensure the following are properly configured and accessible via your system's PA
   This should return the version number of the engine.
 
 By following these instructions, you should be able to successfully compile the dissertation into a PDF.
+
+Note that each chapter is a standalone chapter. Thereby can be compiled by itself. Navigate to the specific chapter and run its makefile.
+
+ ```bash
+ cd chapters/DE
+ make
+ ```
