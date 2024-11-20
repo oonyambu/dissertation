@@ -45,7 +45,7 @@ Ensure the following are properly configured and accessible via your system's PA
    ```bash
    Rscript --version
    ```
-This should return the version of R installed on your system.
+   This should return the version of R installed on your system.
 
 2. **PDF Engine:**
   Ensure your selected LaTeX engine is installed and accessible. For example:
