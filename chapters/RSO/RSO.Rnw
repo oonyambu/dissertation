@@ -1,0 +1,807 @@
+\documentclass[12pt,a4paper, notitlepage]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{sectsty}
+\usepackage[graphicx]{realboxes}
+\usepackage{graphicx}
+\usepackage{subcaption}
+\usepackage{multirow}
+\usepackage{multicol}
+\usepackage{graphicx}
+\usepackage[margin=2.5cm ]{geometry}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{amsmath, amsfonts}
+\usepackage{float}
+\usepackage{booktabs}
+\usepackage{makecell}
+\usepackage[hidelinks,citecolor=blue, colorlinks]{hyperref}
+\usepackage[style=authoryear, sorting=nyt, backend=bibtex,sortcites=true]{biblatex}
+\addbibresource{reference.bib}
+
+\hypersetup{colorlinks,linkcolor={blue},citecolor={blue},urlcolor={red}}
+
+\sectionfont{\fontsize{13}{15}\selectfont}
+\subsectionfont{\fontsize{10}{10}\selectfont}
+%\addbibresource{reference.bib}
+
+\title{\bf Kriging Based Sequential Region Shrinkage with EGO for  Hyperparameter Optimization }
+\author{Onyambu, S.  }
+%\date{}
+
+\providecommand{\keywords}[1]
+{
+  \Large
+  \textbf{\textit{Keywords---}} #1
+}
+
+\usepackage{fullpage}
+\renewcommand{\baselinestretch}{1.25}% {1.25}
+\renewcommand{\arraystretch}{1.1}
+\renewcommand{\tabcolsep}{4pt}
+
+%% trace revision using color
+%% trace revision using color
+\newcommand{\reva}[1]{{\color{red} #1}}
+\newcommand{\revb}[1]{{\color{blue} #1}}
+\newcommand{\revc}[1]{{\color{cyan} #1}}
+\newcommand{\revd}[1]{{\color{blue} #1}}
+\newcommand{\reve}[1]{{\color{blue} #1}}
+%% to remove color, uncomment the following
+%\renewcommand{\reva}[1]{{#1}}  % remove color
+%\renewcommand{\revb}[1]{{#1}}
+%\renewcommand{\revc}[1]{{#1}}  % remove color
+%\renewcommand{\revd}[1]{{#1}}
+%\renewcommand{\reve}[1]{{#1}}
+
+\usepackage{amsmath,amssymb}
+\newcommand{\X}{\boldsymbol{X}}
+\newcommand{\Y}{\boldsymbol{Y}}
+\newcommand{\x}{\boldsymbol{x}}
+%\renewcommand{\u}{\boldsymbol{u}}
+\newcommand{\y}{\boldsymbol{y}}
+\newcommand{\z}{\boldsymbol{z}}
+\newcommand{\w}{\boldsymbol{w}}
+\newcommand{\R}{\boldsymbol{R}}
+\newcommand{\Rinv}{\boldsymbol{R}^{-1}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\cov}{\textrm{Cov}}
+
+\usepackage{Sweave}
+
+
+
+\begin{document}
+
+
+\maketitle
+\begin{abstract}
+   We propose a Kriging based sequential region shrinking method, which invokes  efficient global optimization (EGO) algorithm while sequentially determining a reduced region of interest based on a proportion of most promising data points. The efficiency of the proposed method is demonstrated on various  well known physical test functions. We also  compare the method to well known hyper-parameter tuning methods. Experimental results on datasets indicates that the method uses fewer resources and has an edge to the commonly used hyper-parameter tuning methods like grid and random search and also to other Bayesian optimization such as TREGO.
+\end{abstract}
+
+
+\section{Introduction}
+
+\SweaveOpts{concordance=FALSE, prefix=FALSE, echo=false, fig=true, include=false}
+<<fig=false>>=
+if(!dir.exists('pdfs'))dir.create('pdfs')
+@
+
+Black-box optimization is a key challenge in many fields, including engineering, finance, and machine learning. It involves finding the optimal solution to a complex function that is either expensive or impossible to evaluate analytically. Formally, this can be expressed as:
+$$
+\x^* = \underset{\x \in \Omega}{\arg \min} f(\x),
+$$
+where \(\Omega\) represents the search space of \(\x\). Optimizing \(f(\x)\) is a non-trivial task, typically requiring either derivative-based or derivative-free methods. Derivative-based methods depend on the calculation of the objective function's derivatives, making them suitable when \(f(\x)\) is smooth and differentiable, and its derivatives are easy to compute. However, in many real-world scenarios, the function is unknown or difficult to differentiate, making derivative-free methods preferable. These methods are especially useful in cases of black-box functions, where the objective is not directly accessible.
+
+Hyper-parameter Optimization (HPO) is a classic example of a black-box optimization problem, where the goal is to select the best set of hyper-parameters for a learning algorithm. These hyper-parameters are typically set before training and control various aspects of the model, such as learning rate, regularization, and the choice of the optimization algorithm. The model's performance can vary significantly based on the hyper-parameters chosen \parencite{feurer2019hyperparameter}, with results sometimes fluctuating drastically depending on the architecture \parencite{liu2018darts}. Several methods are widely used for HPO, including grid search, random search \parencite{bergstra2012random}, and Bayesian optimization \parencite{pelikan1999boa}.
+
+Grid search systematically evaluates the model's performance for every combination of hyper-parameters within a predefined grid, choosing the configuration that yields the best result. Random search, on the other hand, samples hyper-parameters randomly from a predefined distribution and selects the best-performing configuration. Bayesian optimization constructs a probabilistic model of the objective function by combining prior knowledge with previously evaluated configurations. The posterior model is then optimized using an acquisition function, and the process is repeated until no further improvements can be made \parencite{brochu2010tutorial}.
+
+While grid search and random search are simple and easy to implement, they become computationally expensive, especially in high-dimensional hyper-parameter spaces. Bayesian optimization is typically more efficient and effective for HPO \parencite{snoek2012practical}. One way to enhance the efficiency of Bayesian optimization is through the use of a surrogate model, which approximates the objective function and directs the search toward promising regions of the hyper-parameter space \parencite{jones1998efficient}.
+
+Bayesian optimization has gained popularity in solving black-box optimization problems due to its ability to handle noisy and non-convex functions, which are common in real-world scenarios. The probabilistic surrogate model used in Bayesian optimization is typically a Gaussian Process (GP), which is a flexible and powerful tool for modeling complex functions \parencite{rasmussen2006gaussian}. GPs can predict the value of the objective function at unexplored points while also providing an estimate of the uncertainty of these predictions.
+
+In this paper, we propose a Kriging-based region shrinkage method that builds on Efficient Global Optimization (EGO) \parencite{jones1998efficient}. The method sequentially refines the region of interest (ROI) based on a proportion of most informative data points, progressively shrinking the search space by reducing the size of the interval for each hyper-parameter at each step. This approach allows us to focus more precisely on promising regions. By using EGO, the method balances exploration and exploitation within the domain.
+
+The effectiveness of the proposed method is demonstrated using several well-known physical test functions from the Virtual Library of Simulation Experiments \parencite{simulationlib}. We compare our approach to existing optimization methods and show that the proposed derivative-free method achieves results on par with or exceeding expectations. Empirical results on DE hyperparameter optimization for constructing uniform projection designs show that our method requires fewer computational resources while performing comparably to, or better than, traditional hyper-parameter tuning methods such as grid search and random search. Although the theoretical guarantees are limited, the empirical results indicate strong potential for practical applications.
+
+\section{Background Theories}
+\subsection{Related Work}
+In pursuit of minimizing loss, numerous optimization techniques based on the Bayesian approach have been developed. While some methods emphasize dimensionality reduction to enhance computational efficiency, the majority focus on reducing the size of the search space, commonly referred to as variable interval size reduction. The work presented here falls within this category.
+
+Among the various strategies explored are the Controlled Gutmann-RBF (CG-RBF) method \parencite{regis2007improved}, the Trust Region Implementation in Kriging-based optimization with Expected Improvement (TRIKE) \parencite{regis2016trust}, and the Trust-Region framework for Efficient Global Optimization (TREGO) \parencite{diouane2023trego}. Although many of these methods confine the search to a local region, the TREGO method alternates between local and global searches, returning to the global scale search after a successful local search.
+
+In TREGO, a local search is conducted when an iteration fails to achieve meaningful progress, meaning there is no significant improvement over the current best solution. Repeated failures progressively reduce the size of the local search space, while successful iterations trigger a global search. However, this process can lead to slow convergence.
+
+To address this, we propose a modification: successful iterations will continue to focus on a reduced local search space, while unsuccessful iterations will initiate a global search. Here, a successful iteration is defined as one in which a point is found with a lower function value than any previously evaluated. We show that this proposed method leads to faster convergence compared to existing techniques, particularly TREGO.
+
+\iffalse %
+\subsection{Kriging}
+
+Kriging, first introduced by South African geostatistician Danie Krige \parencite{krige1951statistical}, is a widely used method for interpolating intermediate values. These values are modeled using a Gaussian Process (GP), governed by prior covariances. Kriging provides both a probabilistic prediction of the output variable and an estimate of the prediction's uncertainty \parencite{chevalier2014kriginv}. It is often more reliable than other interpolation methods, such as smoothing splines. The interpolated values produced by Kriging are considered the best linear unbiased predictors, assuming the predictors are noise-free \parencite{roustant2012dicekriging}.
+
+Kriging assumes that the output \(\y\) is the sum of a known deterministic trend function \(\mu: \x \in D \rightarrow \mu(\x) \in \mathbb{R}\) and a centered, square-integrable process \(Z\):
+
+\begin{equation}
+    Y(x) = \mu(x) + Z(x)
+\end{equation}
+
+Here, \(\mu(x)\) represents the trend, and \(Z(x)\) is a stationary GP with zero mean and a known covariance function \(\psi\).
+
+In Universal Kriging (UK), the trend \(\mu(\x)\) is known up to a set of linear trend coefficients. This trend is modeled as a linear combination of fixed basis functions \(f_i\):
+
+\[
+\mu(\x) = \sum_{i=1}^k \beta_i f_i(\x)
+\]
+
+UK involves deriving the best linear predictors of \(\y\) based on observed data \(\y(\x)\), while estimating the coefficient vector \(\beta = (\beta_1, \dots, \beta_p)^\top\) dynamically. If the basis functions reduce to a constant, UK becomes ordinary Kriging (OK) \parencite{roustant2012dicekriging}.
+
+The covariance function \(\psi\) fully characterizes the behavior of the Gaussian Process \(Z(\x)\), defined as:
+
+\begin{equation}
+\psi(x_i, x_j) = \operatorname{Cov} \left( Z(x_i), Z(x_j) \right) = \sigma^2 \prod_{l=1}^{d} K(h_l ; \theta_l)
+\end{equation}
+
+Here, \(\sigma^2\) is the process variance, \(h_l = |x_{i,l} - x_{j,l}|\) is the difference between the \(l\)-th components of \(x_i\) and \(x_j\), and \(d\) is the dimension of \(\x\). For stationary GPs, the mean and covariance remain constant over time. The correlation function \(K(h_l ; \theta_l)\) depends on the parameter \(\theta_l\), which must be positive for the correlation function to be valid. These parameters, often referred to as characteristic length-scales, are typically chosen to be interpretable in the same units as the corresponding variables \parencite{rasmussen2006gaussian}.
+
+Popular choices for correlation functions include the Gaussian, Mat\'ern, and power-exponential families. The Mat\'ern function with \(\nu = 5/2\) is often preferred, as it is defined as:
+
+\[
+K(h; \theta) = \left( 1 + \frac{\sqrt{5} h}{\theta} + \frac{5 h^2}{3 \theta^2} \right) \exp \left( -\frac{\sqrt{5} h}{\theta} \right)
+\]
+
+The Gaussian correlation function, \(K(h; \theta) = \exp \left( -\frac{h^2}{2\theta^2} \right)\), results in sample paths of \(Z(\x)\) that are too smooth, having derivatives of all orders. This can lead to numerical problems, such as nearly singular covariance matrices during model estimation \parencite{martin2005use}. In contrast, the Mat\'ern function with \(\nu = 3/2\) produces rougher paths, while the \(\nu = 5/2\) variant offers a good balance of smoothness. For this reason, the Mat\'ern function with \(\nu = 5/2\) is commonly recommended in practice \parencite{martin2005use}. Figure 1 illustrates the relationship between \(h\) and \(K(h; \theta)\) for the Mat\'ern function.
+
+\begin{figure}
+    \centering
+    \includegraphics{pdfs/matern correlation.png}
+    \caption{Caption}
+    \label{fig:matern}
+\end{figure}
+
+
+\subsection{The Expected Improvement (EI)}
+The expected improvement (EI) is a measure of how promising a particular set of inputs is in terms of improving the objective function value. Evaluating the objective function at multiple points is often costly, particularly when derivative information is unavailable, and gradient-based methods cannot be applied. Similarly, meta-heuristic methods, such as genetic algorithms, are often impractical due to limited evaluation budgets \parencite{roustant2012dicekriging}. To address these limitations, \textcite{jones1998efficient} introduced the use of the Kriging model as a surrogate to estimate the expected improvement of new inputs over the current best solution. When minimizing, the key idea is that a newly sampled point, \( X_{n+1} \), will yield an improvement of \(\min(y_1, \dots, y_n) - y_{n+1}\) if the new function evaluation \(y_{n+1}\) is smaller than the current best evaluation. Otherwise, the improvement is zero. Here, \(n\) is the number of observations in the design matrix \(\x\).
+
+The expected improvement at a point \(\x\) is computed as:
+
+\[
+EI(x) = \mathbb{E}\left[\max(y_{min} - y(x), 0)\right]
+\]
+
+where \(y_{min} = \min(y_1, \dots, y_n)\) and \(y(x)\) is the predicted value of the objective function at \(\x\), assumed to follow a normal distribution \(y(x) \sim \mathcal{N}(\hat{y}, s^2)\), with \(\hat{y}\) being the predicted value and \(s\) the standard error given by the Kriging model.
+
+Since the actual improvement is unknown before sampling, it must be estimated. Through integration by parts, the expected improvement can be derived in closed form \parencite{jones1998efficient}:
+
+\[
+\mathrm{EI}(\x) = (\min (\y)-\mu(\x)) \Phi\left(\frac{\min (\y)-\mu(\x)}{\sigma(\x)}\right)+\sigma(\x) \phi\left(\frac{\min (\y)-\mu(\x)}{\sigma(\x)}\right)
+\]
+
+where \(\Phi\) and \(\phi\) are the cumulative distribution and probability density functions of the standard normal distribution, respectively. This criterion is particularly useful for sequential optimization, as it is zero at already-sampled points and non-negative elsewhere. It favors exploration of regions with high uncertainty (large predicted variances) while also exploiting regions with promising function evaluations (high predicted means) \parencite{jones1998efficient}.
+
+The smoothness of the EI function-derived from the smooth predictive mean \(\mu(x)\) and variance \(\sigma(x)\) of the Gaussian process, as well as the smoothness of \(\Phi\) and \(\phi\)-enables the use of gradient-based methods. This allows efficient optimization of EI using algorithms like BFGS (Broyden-Fletcher-Goldfarb-Shanno), which is commonly used to find the point that maximizes the expected improvement.
+\fi%
+
+\subsection{The Efficient Global Optimization (EGO) Algorithm}
+
+The Efficient Global Optimization (EGO) algorithm builds upon the Expected Improvement (EI) criterion to sequentially explore the objective function. It begins with an initial design (typically a Latin hypercube) and iteratively visits the global maximizer of the EI criterion. At each step, the Kriging surrogate model is updated, including the re-estimation of hyperparameters, based on newly sampled points. This process continues until a convergence criterion is met or the budget of function evaluations is exhausted \parencite{roustant2012dicekriging}. Algorithm \ref{alg:ego2} summarizes the procedure.
+
+\begin{algorithm}%[H]
+    \caption{EGO algorithm}\label{alg:ego2}
+    \begin{algorithmic}[1]
+        \Require $\X$, $f$ = function to be minimized, $n_{new}$=number of points to add
+        \State Evaluate $f$ at the design points $\X$; $\y=f(\X)$
+        \State Build a kriging model based on $\X$ and $\y$
+
+    \For{$i$ in $1$ to $n_{new}$}
+        \State Find $\x^* \gets \arg\max_{\x}\mathrm{E}[I(\x)]$
+        \State Evaluate $y^* \gets f(\x^*)$
+        \State Update $\X$ and $\y$ with the new point $\x^*$ and response $y^*$
+        \State Update the kriging model
+\EndFor
+\State Return $\X, \y$
+\end{algorithmic}
+\end{algorithm}
+
+
+The EGO algorithm has proven to be highly effective and is frequently used in optimization problems where the number of objective function evaluations is severely limited. It is considered one of the reference methods for global optimization in moderate-dimensional problems (typically \(d \leq 10\)) \parencite{jones2001taxonomy}.
+
+\subsection{The Trust Region EGO (TREGO)}
+Proposed by \textcite{diouane2022trego}, Trust Region Efficient Global Optimization (TREGO) operates by searching within a dynamically adjusted trust region centered at the current best solution. The algorithm identifies new candidate points by optimizing within this region and evaluates the objective function.
+If the result is a success,  the region expands, controlled by \(\alpha\). An iteration is deemed successful when there is a significant improvement on the result obtained from the current result by a margin.
+On the other hand, if poor, it contracts, controlled by \(\beta\). After each evaluation, the surrogate model is updated with the new data, and the trust region is resized accordingly. This process balances global exploration and local refinement until stopping criteria are met. The stopping criteria mostly used is the maximum iterations.
+The default values used for \(\alpha\) and \(\beta\) are $1/0.9$ and $0.9$ respectively. Algorithm \ref{alg:trego} summarizes the procedure. A forcing function is used to determine whether a search is deemed successful or not. The forcing function $\rho(\sigma)$ is a positive continuous nondecreasing function such that $\rho(\sigma) \rightarrow 0$ when $\sigma \rightarrow 0$.
+
+
+
+
+
+
+\begin{algorithm}
+\caption{Simplified Trust-Region EGO (TREGO)}
+\label{alg:trego}
+\begin{algorithmic}[1]
+    \State \textbf{Input:} Initial DoE $\X_0$, function evaluations {$\y_0$}, constants  $\alpha$, $\beta$, $d_{\min}$, $d_{\max}$, initial step-size $\sigma_0$, initial best point $\x_0^* \in \X_0$
+    \State \textbf{Output:} Best found point $x_k^*$
+
+    \State Initialize: $k = 0$
+
+    \While{stopping criterion is not met}
+
+        \State \textbf{Global Phase}
+        \State $\x_{\text{global}} = \underset{\x \in \Omega}{\operatorname{argmax}} \ \mathbb{E}\left(\operatorname{I}(\x)\right) $ \hfill \textit{/* Find global candidate */}
+        \State   Update $\X_{k+1} := \X_k \cup \x_k^{\text{global}}$ and $y_{k+1} := \y_k\cup f(\x_k^{\text{global}})$
+
+        \If{$f(\x_{\text{global}}) \leq f(\x_k^*) - \rho(\sigma_k)$:}  \hfill \textit{/* Successful global step */}
+            \State Update best point: $\x_{k+1}^* = x_{\text{global}}$
+            \State Increase step size: $\sigma_{k+1} = \alpha \sigma_k$
+        \Else
+            \State \textbf{Local Phase}
+            \State Define trust region $\Omega_k = \{\x \in \Omega \mid d_{\min} \sigma_k \leq \|\x - \x_k^*\| \leq d_{\max} \sigma_k\}$
+            \State $\x_{\text{local}} = \underset{\x \in \Omega_k}{\operatorname{argmax}} \ \mathbb{E}\left(\operatorname{I}(\x)\right)$ \hfill \textit{/* Find local candidate */}
+            \State   Update $\X_{k+1} := \X_k \cup \x_k^{\text{local}}$ and $y_{k+1} := \y_k\cup f(\x_k^{\text{local}})$
+
+            \If{$f(\x_{\text{local}}) \leq f(\x_k^*) - \rho(\sigma_k)$:} \hfill \textit{/* Successful local step */}
+                \State Update best point: $\x_{k+1}^* = \x_{\text{local}}$
+                \State Increase step size: $\sigma_{k+1} = \alpha \sigma_k$
+            \Else
+                \State Keep current best point: $\x_{k+1}^* = \x_k^*$
+                \State Reduce step size: $\sigma_{k+1} = \beta \sigma_k$
+            \EndIf
+        \EndIf
+
+        \State Increment iteration counter: $k = k + 1$
+    \EndWhile
+
+    \Return Best found point $\x_k^*$
+\end{algorithmic}
+\end{algorithm}
+
+\section{The Proposed Algorithm}
+One key feature of the Efficient Global Optimization (EGO) algorithm is its ability to balance exploration and exploitation to efficiently search the solution space. By exploring broadly, EGO can uncover regions that are more likely to contain the global optimum, which is especially useful when dealing with complex and multi-modal objective functions. However, this global search strategy can be computationally expensive, particularly when the search space is large or evaluating the objective function is time-consuming. In some cases, a localized search focusing on a smaller region may be more efficient.
+
+To address these challenges, we propose a sequential region shrinkage method that alternates between a localized search and a global search. The global search evaluates whether further improvements can be made beyond the current local search region. This approach aims to strike a balance between efficient local searches and the broader exploration required for finding the global optimum. Algorithm \ref{alg:srs} summarizes the procedure.
+
+\begin{algorithm}%[H]
+    \caption{Sequential Region Shrinkage Method}\label{alg:srs}
+    \begin{algorithmic}[1]
+        \Require $\X$, $f$, $\Omega$ = domain, $n_{new}$, $\rho$
+        \State Evaluate $f$ at the design points $\X$; $\y \gets f(\X)$
+        \State Build a Kriging model based on $\X$ and $\y$
+        \State Set the region of interest (ROI) $\Omega' \gets \Omega$ (initial domain)
+        \While{stopping criteria not met}
+            \State Run EGO within the domain $\Omega'$ to obtain the next $n_{new}$ points
+            \State Update $\X$ and $\y$ with the new points
+            \State Update the Kriging model
+            \State Determine the new ROI $\Omega' \gets \text{ROI}(\X, \y, \Omega, \rho)$
+            \If{small or no improvement (unsuccessful iteration)}
+                \State Restore the original domain: $\Omega' \gets \Omega$
+            \EndIf
+        \EndWhile
+        \State Return $\X$, $\y$
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+
+
+\subsection{Region of Interest (ROI) Determination}
+In this method, a controlled parameter \(\rho\) determines the proportion of the top \(100\rho\%\) of data points to use in calculating the new ROI. In the first iteration, the entire domain \(\Omega\) serves as the initial ROI. EGO adds $n_{new}$ points to the data set \(\X\) and \(\y\), constituting a global search. Afterward, the top \(100\rho\%\) of data points, based on a predefined \(\rho\) value, are selected. The ROI's boundaries are defined as the minimum and maximum of each dimension from these selected points. The ROI is then shifted to center it at the best-performing point, focusing the subsequent local search on this smaller region.
+
+\begin{algorithm}
+    \caption{Determine Region of Interest (ROI)}\label{alg:roi}
+    \begin{algorithmic}[1]
+        \Require $\X$, $\Omega$ = domain, $\y$, $\rho$.
+        \State $\tau \gets \text{indices of the top } 100\rho\% \text{ of } \y$.
+        \State Select points in $\X$ associated with $\tau$.
+        \State Find the best point $\x^*$ that minimizes the objective function  %:= \arg\min{\y}$
+        \State {Determine the lower and upper bounds for points associated with $\tau$;  set $L_j :=  \min_{i \in \tau} x_{ij}$ and $ U_j :=  \max_{i \in \tau} x_{ij}$ for each $j=1,\ldots, d$}
+        \State Set $\mathbf{D} := (\mathbf{U} - \mathbf{L})/2$, where $\mathbf{U}=(U_1, \ldots, U_d)$ and $\mathbf{L}=(L_1, \ldots, L_d)$.
+        \State Set {$\Omega' =  \left\{\x^* - \mathbf{D},  \x^* + \mathbf{D} \right\} \cap \Omega$.}
+        \State \Return $\Omega'$.
+    \end{algorithmic}
+\end{algorithm}
+
+
+
+
+Figure \ref{fig:roi} illustrates the ROI determination process.
+
+\begin{figure}%[!ht]
+     \centering
+    \subfloat[\centering Original function domain $\Omega$ with 5 points added using EGO]{{\includegraphics[width=0.45\textwidth]{pdfs/original domain. Added 5 points using EGO.png}}} \qquad
+    \subfloat[\centering Initial ROI containing the top $30\%$ of points]{{\includegraphics[width=0.45\textwidth]{pdfs/ROI1.png}}} \qquad
+    \subfloat[\centering Centering the ROI at the best point (labeled 1)]{{\includegraphics[width=0.45\textwidth]{pdfs/ROI2.png}}} \qquad
+%    \end{figure}
+%
+%\begin{figure}%[!ht]
+%    \setcounter{subfigure}{3}
+%    \quad\quad\qquad
+    \subfloat[\centering Constraining the ROI to the initial domain $\Omega$]{{\includegraphics[width=0.45\textwidth]{pdfs/ROI3.png}}}%
+    \quad
+    \subfloat[\centering ROI to be used for the next iteration]{{\includegraphics[width=0.45\textwidth]{pdfs/final ROI1.png}}}%
+    \caption{ROI determination using the top \(30\%\) of total points. The {top}  points are labeled 1-5.}
+    \label{fig:roi}%
+\end{figure}
+
+
+In Figure \ref{fig:roi}(a), the contours represent the entire function domain \(\Omega\). We start with 10 points, selected using a maximin Latin hypercube design. These are represented as the black dots in Figure \ref{fig:roi}. Then 5 additional points are added using EGO. These additional points are indicated by the red squares. Taking $\rho=0.3$, the best $30\%$ of the 15 points, labeled 1-5 and indicated by green stars in decreasing order, are then used to define the new ROI, as shown in Figure \ref{fig:roi}(b). The ROI is centered around the best-performing point (labeled 1) in Figure \ref{fig:roi}(c). Since part of the ROI extends outside the original domain, it is constrained within \(\Omega\), resulting in the boxed region in Figure \ref{fig:roi}(d) and \ref{fig:roi}(e). This becomes the new ROI, \(\Omega'\), for the first iteration.
+
+Next, a local search is performed within the newly defined ROI, and $m$ points are added that maximize the Expected Improvement (EI). With each addition, the Kriging model is updated to reflect the newly sampled points. If a point significantly improves upon the current minimum, the iteration is considered successful, and a new ROI is determined using the updated top $100\rho\%$ of data points. Otherwise, the method reverts to a global search.
+
+This iterative process continues until a predefined stopping criterion is met, such as reaching a specified tolerance level or a maximum number of function evaluations. The stopping criterion can be adapted depending on whether the true optimum is known. If the optimum is known, we stop when the tolerance error is reached. Otherwise, we allow for a default of three global search iterations based on empirical tests, which showed that by the third global search, convergence typically occurs.
+
+The region bounding strategy is designed to leverage the fact that a well-spaced design has a high likelihood of sampling points near the optimal region. By focusing the search in the most promising areas and selectively switching to global searches when necessary, the proposed method efficiently balances exploration and exploitation. As a result, it achieves the optimal solution with fewer function evaluations compared to standard EGO and TREGO algorithms.
+
+\subsection{Difference between RSO and TREGO}
+TREGO uses EGO to do optimization within the function domain. Once a a point is obtained whose value is below the current function minimum by a given threshold, the iteration is considered to be successful. The next optimization is to run EGO  in the entire function domain. In the case of an unsuccessful iteration, the region is shrinked by a factor of beta. The shrinked region is then centered in the current function minimum, where EGO is then run. The local optimization is only done after the global iteration is unsuccessful. This is different from the RSO since in the RSO, the region is determined by the top $100\rho\%$ of the data so far used. Also the RSO reverts to the global search after an unsuccessful iteration.
+
+
+\section{Numerical Experiments}
+To illustrate the efficiency of the method, various test functions of various dimensions from the Virtual Library of Simulation Experiments \parencite{simulationlib} were taken into consideration. A maximin Latin hypercube design with $n=5d$ runs was selected as the initial design. The results were compared to those obtained by EGO and TREGO.
+
+The test functions used and their settings are elaborated below:
+\begin{enumerate}
+    \item \textbf{Branin function} $(d=2)$
+$$
+f(x_1, x_2)=\left(x_2-\frac{5}{4 \pi^2} x_1^2+\frac{5}{\pi} x_1-6\right)^2+10\left(1-\frac{1}{8 \pi}\right) \cos x_1+10
+$$
+with $x_1 \in[-5,10], x_2 \in[0,15]$. The global minimum $f(\x^*)=0.397887$ are located at $\x^*=(-\pi$, $12.275),(\pi, 2.275)$ and $(9.42478,2.475)$.
+
+\item \textbf{Six-hump camel function (SixCamel)} $(d=2)$
+$$
+f(x_1, x_2)=4 x_1^2-2.1 x_1^4+x_1^6 / 3+x_1 x_2-4 x_2^2+4 x_2^4
+$$
+with $-2 \leq x_1 \leq 2,-1 \leq x_2 \leq 1$. It has six extreme points, among them the global minimum are $\boldsymbol{x}^*=(0.0898,-0.7126),(-0.0898,0.7126)$ and $f(\x^*)=-1.0316$.
+
+\item \textbf{ Goldstein-Price function} $(d=2)$
+$$
+\begin{aligned}
+f(\mathbf{x})= & {\left[1+\left(x_1+x_2+1\right)^2\left(19-14 x_1+3 x_1^2-14 x_2+6 x_1 x_2+3 x_2^2\right)\right] } \\
+& \times\left[30+\left(2 x_1-3 x_2\right)^2\left(18-32 x_1+12 x_1^2+48 x_2-36 x_1 x_2+27 x_2^2\right)\right]
+\end{aligned}
+$$
+with $-2 \leq x_1, x_2 \leq 2$. The global minimum $f(\x^*)=3$ is at point $\x^*=(0,-1)$ with several local minima around it.
+
+\item \textbf{Hartmann functions} with $d=3$ (Hartmann3), $d=4$ (Hartmann4) and $d=6$ (Hartmann6)
+$$
+f(\boldsymbol{x})=-\sum_{i=1}^4 \alpha_i \exp \left(-\sum_{j=1}^d A_{i j}\left(x_j-P_{i j}\right)^2\right),
+$$
+where $0 \leq x_i \leq 1, i=1,2, \cdots, d$ and $\alpha=(1.0,1.2,3.0,3.2)^T$. The elements of matrices $\boldsymbol{A}, \boldsymbol{P}$ and the global minimum are given in Table \ref{tab:Hartmann}.
+\end{enumerate}
+
+\begin{table}%[!ht]
+     \caption{Parameters for the Hartmann functions}
+    \label{tab:Hartmann}
+   \centering
+    \scalebox{0.8}{
+    \begin{tabular}{|c|c|}
+        \hline
+       Functions  &  Parameters \\
+       \hline
+         $\begin{gathered}\text { \textbf{Hartmann3 }} \\ \boldsymbol{x}^*=(0.1146,0.5556,0.8525) \\ f(\x^*)=-3.86278\end{gathered}$& $\boldsymbol{A}=\left(\begin{array}{lll}3.0 & 10 & 30 \\ 0.1 & 10 & 35 \\ 3.0 & 10 & 30 \\ 0.1 & 10 & 35\end{array}\right) ; \boldsymbol{P}=10^{-4}\left(\begin{array}{ccc}3689 & 1170 & 2673 \\ 4699 & 4387 & 7470 \\ 1091 & 8732 & 5547 \\ 381 & 5743 & 8828\end{array}\right)$\\
+         \hline
+         $\begin{gathered}\text { \textbf{Hartmann4 }} \\ \boldsymbol{x}^*=(0.1873, 0.1906, \\0.5566, 0.2647) \\ f(\x^*)=-3.135474\end{gathered}$
+        &
+        $\begin{aligned}
+        \boldsymbol{A}=&\left(\begin{array}{cccc}10.0 & 0.05 & 3.0 & 17.00\\ 3.0 & 10.00 & 3.5 & 8.00\\
+            17.0 & 17.00 & 1.7 & 0.05\\  3.5 & 0.10 & 10.0 & 10.00\\ 1.7 & 8.00 & 17.0 & 0.10\\
+            8.0 & 14.00 & 8.0 & 14.00 \end{array}\right);
+        \boldsymbol{P} = 10^{-4}\left(\begin{array}{cccc} 1312 & 2329 & 2348 & 4047\\1696 & 4135 & 1451 & 8828\\5569 & 8307 & 3522 & 8732\\ 124 & 3736 & 2883 & 5743\\8283 & 1004 & 3047 & 1091\\ 5886 & 9991 & 6650 & 381\\ \end{array}\right)  \end{aligned}$\\
+        \hline
+         $\begin{gathered}\text { \textbf{Hartmann6 }} \\ \boldsymbol{x}^*=(0.2017,0.1500,0.4769\\ 0.2753,0.3117,0.6573) \\ f(\x^*)=-3.32237\end{gathered}$ &
+           $\begin{aligned}  \boldsymbol{A}=&\left(\begin{array}{cccccc}10 & 3 & 17 & 3.5 & 1.7 & 8 \\ 0.05 & 10 & 17 & 0.1 & 8 & 14 \\ 3 & 3.5 & 1.7 & 10 & 17 & 8 \\ 17 & 8 & 0.05 & 10 & 0.1 & 14\end{array}\right) \\  \boldsymbol{P}=10^{-4}&\left(\begin{array}{cccccc}1312 & 1696 & 5569 & 124 & 8283 & 5886 \\ 2329 & 4135 & 8307 & 3736 & 1004 & 9991 \\ 2348 & 1451 & 3522 & 2883 & 3047 & 6650 \\ 4047 & 8828 & 8732 & 5743 & 1091 & 381\end{array}\right)\end{aligned}$\\
+           \hline
+    \end{tabular}
+    }
+\end{table}
+
+Functions with dimensions 6 or less were considered to be low dimensional functions. In the optimization, we used error between the function value evaluated at the best point and the known global optimum. We were interested in the number of function evaluations used by the algorithm to converge. This was replicated 20 times. The results were compared to the ones obtained when running EGO alone and when using TREGO. The results are reported in Table \ref{tab:evals}.
+
+ \begin{table}%[!ht]
+  \caption{Number of function evaluations to achieve the desired tolerance level}
+ \label{tab:evals}
+ \centering
+ \scalebox{0.9}{
+ \begin{tabular}[t]{llrrrrrr}
+ \toprule
+ \multicolumn{1}{c}{} & \multicolumn{1}{c}{} & \multicolumn{3}{c}{mean} & \multicolumn{3}{c}{median} \\
+ \cmidrule(l{3pt}r{3pt}){3-5} \cmidrule(l{3pt}r{3pt}){6-8}
+ Function & tolerr & EGO &TREGO& RSO & EGO &TREGO& RSO \\
+ \midrule & $10^{-3}$ &35.75 &28.75  &26.25 &35&30&25\\
+ \multirow{-2}{*}{\raggedright\arraybackslash \textbf{Branin}} & $10^{-4}$  &42&37.25&32.5&40&40&30\\
+ \cmidrule{1-8}
+ & $10^{-3}$ & 43.50& 41.00&33.75 &45&40&35\\ %\cmidrule{1-8}
+ \multirow{-2}{*}{\raggedright\arraybackslash \textbf{SixCamel}} & $10^{-4}$ &48.75 &46.75&40.75 &50&50&40\\
+ \cmidrule{1-8}
+ & $10^{-3}$  & 67 &52.5& 41 & 70 &57.5& 35\\
+ \multirow{-2}{*}{\raggedright\arraybackslash \textbf{Goldstein-Price}} & $10^{-4}$  &70 &70& 42.5 & 70 &70& 37.5\\
+ \cmidrule{1-8}
+ & $10^{-3}$  & 23.4 &21.2& 20.8 & 24 &20& 20\\\cmidrule{2-8}
+ \multirow{-2}{*}{\raggedright\arraybackslash \textbf{Hartmann3}} & $10^{-4}$  & 30.8 &25.75& 26.4 & 26 &22& 24\\
+\cmidrule{1-8}
+& $10^{-3}$  & 46.0 &44.0& 40.0 & 44 &42& 36\\
+\multirow{-2}{*}{\raggedright\arraybackslash \textbf{Hartmann4}} & $10^{-4}$  & 63.6 &55.2 &53.6 & 46 &44& 40\\\cmidrule{1-8}
+ & $10^{-3}$  & 60.5 &58.5& 49.5 & 64 &61& 42.5\\
+ \multirow{-2}{*}{\raggedright\arraybackslash \textbf{Hartmann6}} & $10^{-4}$  & 67.5& 62& 52 & 70 &67.5& 47.5\\
+ \bottomrule\\
+ \end{tabular}}
+\end{table}
+
+
+
+\begin{figure}%[!ht]
+    \centering
+    \subfloat[\centering Branin function]{{\includegraphics[width=.5\textwidth, height=.4\textwidth]{pdfs/branin_error.png}}}%
+%    \qquad
+    \subfloat[\centering SixCamel function]{{\includegraphics[width=.5\textwidth, height=.4\textwidth]{pdfs/camel6_error.png} }}
+    \qquad
+    \subfloat[\centering  Goldstein-Price function]{{\includegraphics[width=.5\textwidth, height=.4\textwidth]{pdfs/modifiedgoldprice.png} }}%
+%    \qquad
+    \subfloat[\centering Hartmann3 function]{{\includegraphics[width=.5\textwidth, height=.4\textwidth]{pdfs/hart3_error.png} }}
+    \qquad
+    \subfloat[\centering Hartmann4 function]{{\includegraphics[width=.5\textwidth, height=.4\textwidth]{pdfs/hart4.png} }}
+%    \qquad
+    \subfloat[\centering Hartmann6 function]{{\includegraphics[width=.5\textwidth, height=.4\textwidth]{pdfs/hart6.png} }}
+    \caption{Comparison of 3 methods for different test functions}%
+    \label{fig:functions}%
+\end{figure}
+
+
+From the results above, we note that the proposed method converges with fewer function evaluations than both EGO and TREGO {in all but one instances}. This efficiency not only conserves computational resources but also is particularly beneficial in resource-limited scenarios. The exploitation characteristics of our method contribute to this performance. Notably, while our method generally outperform EGO and TREGO in all instances, for the Hartmann3 function and tolerance of $10^{-4}$, TREGO performs slightly better than our method. %, suggesting a need for further investigation into specific cases.
+
+Additionally, Figure \ref{fig:functions} shows the minimization path for different test functions using the 3 methods, {along with the 2 standard error bars  at each step of the minimization path}. The log mean error analysis indicates that the proposed method rapidly decreases the error rate before stabilizing, signifying a faster convergence compared to the alternatives. In constrained resource settings, where only 15-25 new observations can be made, our method achieves a log10 error of at most $-3$ across all tested functions.
+
+\section{Application in {Generating Uniform Projection Designs}}
+%\subsection{Uniform Projection Design Generation using Differential Evolution}
+We consider tuning the DE algorithm from UniPro package to generate uniform projection designs (UPDs). As the DE algorithm is stochastic, the generation is replicated 10 times and the mean of the 10 criterion values obtained. This is done to minimize variation. This is considered to be the objective function to be optimized.
+
+
+As described in Chapter 2, the DE algorithm has five hyperparameters: NP, itermax, pCR, pMut and pGBest. We use EGO, TREGO and RSO to tune DE hyperparameters. % As generating the UPDs is quite stochastic, for every factor combination, 10 replicates are obtaineed and the average of these 10 values are considered to be the function value of that particular combination.
+Starting with a random Latin hypercube of size $5d=25$, we obtain the minimization path by obtaining  25 additional points. This is replicated 20 times. {Figure \ref{fig:line_upd} shows the minimization path and Figure \ref{fig:optimal} shows the boxplots of the final optimal objective values for three methods.  The RSO method tends to generally provide smaller objective values than the EGO or TREGO method.}  %, along with the 2 standard error bars  at each step of the minimization path.
+
+\begin{figure}%[!ht]
+\centering
+\caption*{\includegraphics [scale=0.2,trim={2cm 7.3cm 0cm 7cm},clip]{pdfs/legend}}
+\begin{subfigure}[b]{.3\textwidth}
+<<pdfs/results30x3>>=
+source('R/plotting.R')
+lineplot(read.table('data/results30x3.txt', header = TRUE))+
+  theme(legend.position='none')
+@
+\includegraphics[]{pdfs/results30x3}
+\caption{$30\times 3$}
+\end{subfigure}
+\begin{subfigure}[b]{.3\textwidth}
+\centering
+<<pdfs/results50x5>>=
+lineplot(read.table('data/results50x5.txt', header = TRUE))+
+  theme(legend.position='none')
+@
+\includegraphics[]{pdfs/results50x5}
+\caption{$50\times 5$}
+\end{subfigure}
+\begin{subfigure}[b]{.3\textwidth}
+\centering
+<<pdfs/results70x7>>=
+a <- lineplot(read.table('data/results70x7.txt', header = TRUE))+
+  theme(legend.position='top')
+a + guides(color='none')
+@
+\includegraphics[]{pdfs/results70x7}
+\caption{$70\times 7$}
+\end{subfigure}
+\caption{Minimization path for 3 methods in the construction of UPDs  using DE}
+\label{fig:line_upd}
+
+<<label=pdfs/legend>>=
+l <- cowplot::get_plot_component(a + theme_bw() + theme(legend.position = 'top'), "guide-box-top")
+grid::grid.draw(l)
+@
+\end{figure}
+
+
+\begin{figure}%[!ht]
+\centering
+\begin{subfigure}[b]{.3\textwidth}
+<<pdfs/box30x3>>=
+source('R/plotting.R')
+boxplots(read.table('data/results30x3.txt', header = TRUE))
+@
+\includegraphics[]{pdfs/box30x3}
+\caption{$30\times 3$}
+\end{subfigure}
+\begin{subfigure}[b]{.3\textwidth}
+\centering
+<<pdfs/box50x5>>=
+source('R/plotting.R')
+boxplots(read.table('data/results50x5.txt', header = TRUE))
+@
+\includegraphics[]{pdfs/box50x5}
+\caption{$50\times 5$}
+\end{subfigure}
+\begin{subfigure}[b]{.3\textwidth}
+\centering
+<<pdfs/box70x7>>=
+boxplots(read.table('data/results70x7.txt', header = TRUE))
+@
+\includegraphics[]{pdfs/box70x7}
+\caption{$70\times 7$}
+\end{subfigure}
+\caption{Comparison of optimal results from 3 methods}
+\label{fig:optimal}
+\end{figure}
+
+%%%%%%%%
+
+\begin{figure}%[!ht]
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+<<pdfs/corplot30>>=
+corplot(30,3, TRUE)
+@
+\includegraphics{pdfs/corplot30}
+\caption{$30\times 3$}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+<<pdfs/corplot50>>=
+corplot(50,5, TRUE)
+@
+\includegraphics{pdfs/corplot50}
+\caption{$50\times 5$}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+<<pdfs/corplot70>>=
+corplot(70,7, TRUE)
+@
+\includegraphics{pdfs/corplot70}
+\caption{$70\times 7$}
+\end{subfigure}
+\caption{Distribution of optimal hyperparameter settings}
+\label{fig:optimalpoints}
+\end{figure}
+
+We also take a look at the distribution of the optimal hyperparameter settings from the 20 replicates in Figure \ref{fig:optimalpoints} obtained {from the RSO method, where NP and itermax are rescaled to [0, 1]}. This determines as to wether the optimal region is the same point or we are converging to a local optimum.
+The $30 \times 3$ target design indicates that the process does not converge to the same value each time. On the other hand, from the $50 \times 5$ and $70 \times 7$ target designs, we see that the  values for NP and itermax  are concentrated at the upper vertex. Finally, from the $70 \times 7$ target design, we find out that the values for pCR and pGBest  are also  concentrated at the upper end. However, none of the target designs give information about where the probability of mutation (pMut) should lie.
+We examine the correlations to determine as to whether there exists a two way correlation amongst the parameters.
+
+
+\begin{figure}%[!ht]
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+<<pdfs/corplot30_1>>=
+corplot(30,3)
+@
+\includegraphics{pdfs/corplot30_1}
+\caption{$30\times 3$}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+<<pdfs/corplot50_1>>=
+corplot(50,5)
+@
+\includegraphics{pdfs/corplot50_1}
+\caption{$50\times 5$}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+<<pdfs/corplot70_1>>=
+corplot(70,7)
+@
+\includegraphics{pdfs/corplot70_1}
+\caption{$70\times 7$}
+\end{subfigure}
+\caption{Correlation plot of the optimal hyperparameter settings}
+\label{fig:correlation}
+\end{figure}
+
+From the correlation plots in Figure \ref{fig:correlation}, we do notice that  pMut is highly correlated to pCR. These two hyperparameters could be optimized simultaneously while holding the other 3 hyperparameters (NP, itermax, pGBest) at their highest level. The justification for this is due to the fact that NP and  itermax could be thought of as the budget size. For the probability of using global best, this value should be high since we would want to be as close as possible to the global minimum. {Figure \ref{fig:scatter} shows the scatter plots of pMut and pCR. These two hyperparameters are intriguing as they are highly negatively correlated.} % The plots are based on tuing all 5 hyperparameters.
+
+
+\begin{figure}%[!ht]
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+<<label=pdfs/scatter30>>=
+s <- corplot(30, 3, return_s=TRUE)
+plot(s[,3:4],xlim=c(0,1), ylim=c(0,1))
+@
+\includegraphics{pdfs/scatter30}
+\caption{$30\times 3$}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+<<label=pdfs/scatter50>>=
+s <- corplot(50, 5, return_s=TRUE)
+plot(s[,3:4], xlim=c(0,1), ylim=c(0,1))
+@
+\includegraphics{pdfs/scatter50}
+\caption{$50\times 5$}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+<<label=pdfs/scatter70>>=
+s <- corplot(70, 7, return_s=TRUE)
+plot(s[,3:4], xlim=c(0,1), ylim=c(0,1))
+@
+\includegraphics{pdfs/scatter70}
+\caption{$70\times 7$}
+\end{subfigure}
+\caption{Scatter plots showing the relation between pMut and pCR}
+\label{fig:scatter}
+\end{figure}
+
+Having set these three at their maximum level, an optimization is carried out on the two remaining parameters, pMut and pCR. The results obtained do not differ from the 5 hyperparameter optimization, though takes a bit longer since NP and itermax have been held at their highest level.
+
+{Finally, we compare the RSO method with other methods in generating UPDs.
+We consider the random search method, the grid search method, the DE1 and DE4 methods provided by \textcite{stokes2023metaheuristic}, and the DEoptim method based on the second order model in Chapter 2. The random search used a random Latin hypercube design with 1024 runs and the grid search method used a $4^5$ full factorial design. The optimal factor combinations obtained for the random search and grid search are given in Tables \ref{tab:lhd_optim} and \ref{tab:grid_optim}, respectively.}
+DE1 always uses the global best (i.e., pGBest=1), while DE4 is a hybrid version with pGBest=0.5, which randomly chooses the global best, the current agent and a random agent with probability $50$\%, $25$\%, and $25$\% for each column independently. Both DE1 and DE4 use NP = 100, itermax = 1500, pMut = 0.1 and pCR = 0.5.  The DEoptim method from Chapter 2 uses  NP = 100, itermax = 1500, pGBest = 0.95 and optimal settings of (pMut, pCR) as (0.95, 0.05), (0.25, 0.75), and (0.15, 0.85), respectively, for target size $30\times3$, $50\times5$ and $70\times7$. {Table \ref{tab:rso_optim} gives the optimal hyperparameter settings obtained from  the RSO method.}
+
+%We generated 100 UPDs for a given target size for each method. Under the grid search method, a $4^5$ FFD with 10 replicates per factor combination was used to determine the optimal factor combination for each factor combination was generated.  This was done to reduce noise and also to match how the the function was evaluated when using EGO, TREGO and RSO methods. For the random search, the same procedure was followed though using a 1024-random LHD.
+
+{For a given target size and each method, we generated 100 UPDs using the respective optimal factor combination and computed their objective $\phi(\cdot)$ values.}  Figure \ref{fig:6methods} compares the objective values of the generated UPDs from the six methods.
+
+
+<<results=tex, fig=false, include=true>>=
+fn <- function(path){
+  read.csv(path, row.names=1)%>%
+    mutate(phi = rowMeans(pick(matches('X\\d'))), n=NULL, k=NULL, .keep='unused')%>%
+    slice_min(phi)
+}
+a <- list.files("data", pattern = "csv$", full.names = TRUE)
+a <- setNames(a, gsub(".*/(.*_\\d+)_.*", "\\1", a))
+b <- lapply(split(a, gsub(".*_|.csv", "", a)), lapply, fn)
+d <- transpose(b)
+
+do.call(rbind, d$lhd_1024) %>%
+    `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
+    rename("$\\phi(\\cdot)$" = phi)%>%
+    kableExtra::kbl(format = 'latex',digits =  c(1,2,2,2,2,4), label='lhd_optim', escape = FALSE,
+    caption='Optimal hyperparameter settings for each target design with $4^5$ LHD')
+
+do.call(rbind, d$full_1024)%>%
+    `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
+    rename("$\\phi(\\cdot)$" = phi)%>%
+    kableExtra::kbl(format = 'latex',digits = c(1,2,2,2,2,4), label='grid_optim', escape = FALSE,
+    caption='Optimal hyperparameter settings for each target design with $4^5$ FFD')
+
+
+# b%>%
+#    sapply(sapply, getElement,'phi')%>%
+#    `colnames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", colnames(.)))%>%
+#    `rownames<-`(sub("(.*)_(\\d+)", "\\2 \\U\\1", perl = TRUE,
+#                     basename(rownames(.)))%>%
+#                     str_replace_all(c("1024"="$4^5$", "243"="$3^5$", FULL="FFD")))%>%
+#    t()%>%
+#    kableExtra::kable('latex', escape = FALSE, label='grid_random',
+#        caption = 'Average of 10 $\\phi(\\cdot)$ values from the optimal grid and random search methods')
+@
+
+
+<<results=tex, fig=false, include=true>>=
+get_par <- function(n, m, K=100){
+ v <- read.table(sprintf("data/results%dx%d.txt", n, m), h=TRUE)
+ s <- read.table(sprintf("data/results%dx%d_par.txt", n, m), header = TRUE)
+ mn <- slice_min(subset(v, method == 'RSO'), values,with_ties = FALSE);
+ s[parse_number(mn$ind),]
+}
+t(mapply(get_par, c('30x3'=30,'50x5'=50,'70x7'=70), c(3,5,7)))%>%
+     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
+    kableExtra::kbl(format = 'latex',digits = 2, escape=FALSE, label='rso_optim',
+    caption='Optimal hyperparameter settings for each target design using RSO')
+@
+
+
+
+<<label=pdfs/boxplots2>>=
+comparison(30, 3, 100)
+@
+
+<<label=pdfs/boxplots3>>=
+comparison(50, 5, 100)
+@
+
+<<label=pdfs/boxplots4>>=
+comparison(70, 7, 100)
+@
+
+
+\begin{figure}%[!ht]
+     \centering
+     \begin{subfigure}[b]{0.3\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{pdfs/boxplots2}
+         \caption{$30\times 3$ as target}
+         %\label{fig:y equals x}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.3\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{pdfs/boxplots3}
+         \caption{$50\times 5$ as target}
+         %\label{fig:three sin x}
+     \end{subfigure}
+     \hfill
+     \begin{subfigure}[b]{0.3\textwidth}
+         \centering
+         \includegraphics[width=\textwidth]{pdfs/boxplots4}
+         \caption{$70\times 7$ as target}
+         %\label{fig:five over x}
+     \end{subfigure}
+        \caption{Comparison of six methods for constructing UPDs}
+        \label{fig:6methods}
+\end{figure}
+
+Figure \ref{fig:6methods} indicates the advantage of using optimized methods as compared to random search or grid search. Even using 1024-runs to determine the optimal settings, the grid and random search methods perform poorly as compared to RSO and DEoptim. On the other hand, DE1 and DE4 perform the worst as these methods use arbitrary settings selected by \textcite{stokes2023metaheuristic}.
+
+Figure \ref{fig:6methods} also indicates that using the RSO as compared to the default DE1 and DE4 is highly effective when the dimension of the target design increases. This is because with increase in dimension of target design, the DE1/DE4 algorithms are still far from the optimal solution, while the RSO carries out an additional minimization which moves closer to the optimal hyperparameter settings. In addition, RSO and DEoptim have similar performance despite the use of different settings for pCR, pMut and pGBest. One advantage of using RSO over DEoptim is the notion that for DEoptim, one has to determine which design is best, to carry out the optimization. In Chapter 2, it is shown that the 50-run OACD is the best. On the other hand, RSO uses a 25-run LHD with additional 25 points for optimization. No prior knowledge of the design is needed. In addition, determining the optimal settings in DEoptim is quite a task when there exists significant interactions between the factors, while for RSO, the method yields the optimal settings directly.
+
+
+% \iffalse
+% \subsection{Support Vector Machine}
+% Support Vector Machine (SVM) is a powerful supervised machine learning algorithm used for classification. It finds an optimal hyperplane that separates data points of different classes by maximizing the margin between the hyperplane and support vectors (closest data points). SVM can handle nonlinearly separable data using kernel functions. It is widely used in various applications, such as image classification and text categorization.
+
+
+% Here we implement hyperparameter optimization for SVM using the method proposed and compare the results to the grid search HPO. As storing the kernel matrix requires memory that scales quadratically with the number of data points, and training time for traditional SVM algorithms also scales superlinearly with the number of data points, the algorithm isn't feasible for large data sets. We will therefore use datasets with less than 2000 observations to do the hyperparameter tuning.
+% We consider two hyperparameters:
+% \begin{itemize}
+%     \item \textbf{Cost} -- Also known as the c-parameter, adds a penalty for each misclassified data point. If the cost is small, the penalty for misclassified points is low so a decision boundary with a large margin is chosen at the expense of a greater number of misclassifications. If cost is large, SVM tries to minimize the number of misclassified examples due to high penalty which results in a decision boundary with a smaller margin. The penalty for each data point is directly proportional to the distance to decision boundary.
+%     \item \textbf{Gamma} is a parameter of the radial basis function kernel used by the SVM. Low values of gamma indicates a large similarity radius which results in more points being grouped together. For high values of gamma, the points need to be very close to each other in order to be considered in the same group (or class). Therefore, models with very large gamma values tend to overfit. As the gamma decreases, the regions separating different classes get more generalized.
+% \end{itemize}
+
+% We use different datasets: Maternal Health Risk Dataset, Seeds Dataset, Breast Cancer dataset and Glass Identification dataset, to illustrate the efficiency. Details of these datasets are given in Table \ref{tab:datasets}.
+
+% \begin{table}%[!ht]
+%     \caption{Data sets used for tuning SVM}
+%     \label{tab:datasets}
+%     \centering
+%     \begin{tabular}{|c|c|c|c|c|c|}
+%     \hline
+%      Data Set& Class & Sample Size & features & cost&gamma  \\
+%      \hline
+%      Maternal Health Risk& 3 & 1014 & 6&$\left[2^{-16},2^{3}\right]$&$\left[10^{-2},10^{-2}\right]$\\
+%  %    Raisin & 2 &900&7&$\left[2^{-16},2^{3}\right]$&$\left[10^{-2},10^{2}\right]$\\
+%      Seeds & 3 &210&8&$\left[2^{-16},2^3\right]$&$\left[10^{-2},10^{2}\right]$\\
+% %     Turkish Music emotion & 4 &400&50&$\left[2^{-16},2^{3}\right]$&$\left[10^{-2},10^{2}\right]$\\
+%      Breast Cancer &6&106&9&$\left[2^{-16},2^{3}\right]$&$\left[10^{-2},10^{2}\right]$\\
+%      Glass Identification&7&214&9&$\left[2^{-16},2^{3}\right]$&$\left[10^{-2},10^{2}\right]$\\
+%           \hline
+% \end{tabular}
+% \end{table}
+
+% For hyper-parameter tuning, we first scale the data. As described in Part 2 of Sarle's Neural Networks FAQ \textcite{ws1997neural}, the main advantage of scaling is to avoid attributes in greater numeric ranges dominating those in smaller numeric ranges. Another advantage is to avoid numerical difficulties during the calculation \parencite{hsu2003practical}. Because kernel values usually depend on the inner products of feature vectors, e.g., the linear kernel and the polynomial kernel, large attribute values might cause numerical problems. For all the problems, we use the radial basis kernel function. Since we only have 2 hyper-parameters to optimize, we use \reva{either a 10-point or 20-point} maximin Latin hypercube design as the initial design. We then sequentially add 5 points to the design until we run out of budget. In this experiment, we set the budget to be \reva{50 or 100}. \reva{(explina why different initial points and budgets are used for different datasets?)}
+% %That is, $10$ initial points plus additional $90$ points.
+% As we do not have the test data, we carry out a 10 fold cross validation on the whole data set and report the cross validation accuracy. We replicate the algorithms  20 times, and take the average of the reported cross validation accuracy. The results obtained are provided in  Figure \ref{fig:data}.
+
+% \begin{figure}%[!ht]
+%     \centering
+%     \subfloat[\centering Breast Cancer dataset]{{\includegraphics[width=7cm, height=5cm]{pdfs/breast_accuracy.png}}}%
+%     \qquad
+%     \subfloat[\centering Seed dataset]{{\includegraphics[width=7cm, height=5cm]{pdfs/seeds3.png} }}%
+%     \qquad
+%     \subfloat[\centering Maternal Health dataset]{{\includegraphics[width=7cm, height=5cm]{pdfs/MATERNAL3.png} }}
+%        \qquad
+%     \subfloat[\centering Glass Identification dataset]{{\includegraphics[width=7cm, height=5cm]{pdfs/glass_accuracy.png} }}
+%     \caption{\reva{Comparison of EGO, TREGO and RSO in terms of classification accuracy}}%
+%     \label{fig:data}%
+% \end{figure}
+
+% From the results of Figure \ref{fig:data}, we do notice that the proposed method does perform fairly well compared to the grid search and the EGO method. \reva{(There is no random or grid search results)} The method performs much better than the grid search as it uses fewer function evaluations to obtain results better than the grid search. On the other hand, in comparison the EGO method, we do note a slight improvement in accuracy and also an improvement in the time used in evaluating the process. \revb{(Update Figure \ref{fig:data}. Update the y-axis of Glass Identification. Revise the paragraphes according to Figure \ref{fig:data}.)}
+
+% The times obtained above were from a Dell Latitude 5420 running the Windows 11 Pro operating system (64-bit, Build 22621) powered by an 11th generation Intel Core i7-1185G7 processor, has 16GB of RAM, and supports DirectX 12. For all the datasets above, the proposed method takes less time compared to the grid search. This is easily contributed to the few number of function evaluations(100) carried put by the proposed method as compared to 400 function evaluations carried out by the grid search. In comparing to the EGO method, our method takes less time even though the two methods have the same number of function evaluations. This is because for the proposed method, we restrict the EI optimization in a smaller region which in turns leads to faster convergence as compared to the original EGO.
+% In addition to the time, the accuracy curve per additional 5 units were obtained.
+% \fi
+
+% \section{Concluding Remarks}
+
+% In this work, we introduced a novel kriging-based region shrinkage method integrated with the Efficient Global Optimization (EGO) algorithm. This approach employs an intuitive Bayesian optimization technique, focusing on a region of interest to optimize hyperparameters. By alternating between global exploration and localized search, our method effectively combines the strengths of the EGO framework, facilitating a flexible predictor setup while maintaining an efficient exploration-exploitation balance. This innovative combination enhances the optimization process, particularly in high-dimensional spaces.
+
+% The extensive benchmarking against the native EGO and TREGO methods highlights the advantages of our proposed approach. Initial results indicate that the kriging-based region shrinkage method converges faster than both EGO and TREGO. This rapid convergence is particularly valuable in practical applications, where minimizing the number of function evaluations can lead to significant resource savings. The method's ability to achieve near-optimal results with fewer evaluations underscores its efficiency, making it a compelling choice for complex optimization tasks.
+
+% Furthermore, the findings demonstrate that, when utilizing a reasonable value for the parameter \(\rho\), the proposed method consistently outperforms its competitors. This performance advantage not only validates the effectiveness of the approach but also emphasizes the importance of careful hyperparameter tuning in achieving superior optimization outcomes. The results suggest that our method can be particularly beneficial in scenarios where computational resources are limited or where rapid convergence is critical.
+
+% Looking ahead, there are promising avenues for future research. One potential direction involves extending the method to incorporate TREGO as its foundational algorithm instead of EGO, which may further enhance its applicability and performance. Additionally, an intriguing future work could explore the dynamic expansion of the search region by a factor \(\gamma\) during unsuccessful iterations, allowing for more adaptive responses to the optimization landscape. Such developments could improve the robustness and overall efficiency of the optimization process, paving the way for broader applications across various fields.
+\printbibliography
+
+\end{document}

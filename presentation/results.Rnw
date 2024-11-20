@@ -1,0 +1,204 @@
+\documentclass{beamer}
+\usepackage{multirow}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage[table]{xcolor}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{tikz}
+\usetikzlibrary{shapes.geometric, calc, positioning}
+
+\usepackage{Sweave}
+\usepackage{float}
+\usepackage{hyperref}
+\usepackage{comment}
+\usepackage[style=authoryear,sorting=ynt, backend=bibtex]{biblatex}
+\setbeamercolor*{bibliography entry title}{fg=black}
+\setbeamercolor*{bibliography entry location}{fg=black}
+\setbeamercolor*{bibliography entry note}{fg=black}
+\setbeamertemplate{bibliography item}{}
+\renewcommand*{\bibfont}{\scriptsize}
+\addbibresource{../include/reference.bib}
+
+\usepackage{amsmath,amssymb}
+\newcommand{\X}{\boldsymbol{X}}
+\newcommand{\Y}{\boldsymbol{Y}}
+\newcommand{\x}{\boldsymbol{x}}
+\renewcommand{\u}{\boldsymbol{u}}
+\newcommand{\y}{\boldsymbol{y}}
+\newcommand{\z}{\boldsymbol{z}}
+\newcommand{\w}{\boldsymbol{w}}
+\newcommand{\R}{\boldsymbol{R}}
+\newcommand{\Rinv}{\boldsymbol{R}^{-1}}
+\renewcommand{\r}{\boldsymbol{r}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\cov}{\textrm{Cov}}
+% \usepackage{enumitem}
+% \setlistdepth{10}
+
+
+
+
+\usetheme{Madrid}
+\usecolortheme{beaver}
+
+
+\title[]
+{Studies in Hyperparameter Tuning, Design Selection and Optimization}
+%{Optimizing Uniform Projection Designs: Differential Evolution Tuning, Space-Filling Evaluation, and Kriging-Driven Sequential Optimization}
+\subtitle{}
+
+\author[Onyambu, S.] {Samuel Onyambu\\
+          Advisor: Hongquan Xu}
+
+
+\institute[UCLA] % (optional)
+{
+
+ Department of Statistics\\
+ UCLA
+
+}
+
+\date[]{\today} % (optional)
+%{STAT 201B, 10th March 2021}
+
+%\logo{\includegraphics[height=1.5cm]{images/nsf logo.png}}
+
+%End of title page configuration block
+%------------------------------------------------------------
+
+
+
+%------------------------------------------------------------
+%The next block of commands puts the table of contents at the
+%beginning of each section and highlights the current section:
+
+
+\begin{document}
+
+% \section{Overview of the Presentation}{Main focus areas}
+% \begin{itemize}
+%   \item optimization
+%   \item Differential Evolution
+%   \item Uniform Projection Designs (UniPro)
+%   \item hyperparameter tuning
+% \end{itemize}
+
+
+\begin{frame}{Results - Box plot}
+\begin{itemize}
+\item The performance of the training data set depends on the nature of the testing data set.
+\item The composite designs, CCD and OACD, seem to be better when tested on the $3^5$ FFD.
+\item The space filling designs (random LHD, maximin LHD, and maxpro LHD) did better when tested on the 243-run random LHD.
+\item OACD robust over CCD. 
+\item Thus: Use OACD for hyperparameter initialization.
+\item Models?  There seems to be no striking observation to be made as to whether one fitting method performs better than the other two, with  exception for one $30 \times 3$ case when the kriging model fitting to the CCD training data had a much higher RMSE value than the other cases.
+\end{itemize}
+\end{frame}
+
+
+\begin{frame}{Results - Factor Analysis}
+\begin{itemize}
+  \item The model obtained from using the maxpro LHD  training data is the worst performing. 
+  \item Does not capture important main effects. 
+  \item The model obtained by using OACD performs the best. It has an adjusted $R^2$ of $0.87$. Captures important main effects and interactions.
+  \item CCD might be a little worse than OACD because of the fewer number of points $(43)$ used for training compared to the other models which used $50$ points.
+  \item The model from the CCD does not identify any of the quadratic effects to be significant while the other modes do, not robust enough.
+  \item The main effects of three hyperparameters (NP, itermax and pGBest) are very significant. Should be set at the maximum level since the coefficients are negative
+  \item The coefficient for pMut:pCR is positive. To minimize, pMut:pCR should have opposing levels, one high, the other low. Contour plots for further investigation:
+\end{itemize}
+\end{frame}
+
+% \begin{frame}
+% \begin{figure}{Interaction with pMut}
+% \centering
+% \includegraphics[scale=0.5]{../chapters/DE/pdfs/interactions}
+% \caption{Interaction plots involving pMut based on the $4^5$ FFD and target size $30\times3$.}
+% \label{interaction}
+% \end{figure}
+% \end{frame}
+
+\begin{frame}{Contours}
+\begin{itemize}
+  \item Slice the hypercube holding the population size, the itermax and pGbest at highest level.
+  \item The minimum seems to occur at the off-diagonal. We assume the relation pCR = 1-pMut
+  \item No general setting for the various target sizes.
+  \item Settings Obtained used at the end for comparison with the novel method.
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Results - Borehole Function}
+\begin{itemize}
+  \item All designs have 64 levels
+  \item UniPro efficient than MaxPro, Maxmin
+  \item Ud most efficient- for this particular function
+  \item upd16 also efficient. No need of 64 levels
+\end{itemize}
+\end{frame}
+\begin{frame}{Results - Gfunction}
+\begin{itemize}
+\item ud worst.. not robust
+\item upd efficient, thus robust
+\item maxmin/maxpro worse than random design.
+\item upd with 8 levels most efficient
+\item upd16 quite robust--displayed by Rosenbrock function
+\end{itemize}
+\end{frame}
+
+\begin{frame}{Results -- Branin Minimization Path}
+\begin{enumerate}
+  \item What about when we carry out the optimization using the various initial designs?
+  \item initial design size? 10 points + 20points, 10d
+  \item budget size 30 points
+  \item The effect of initial design is very pronounced at the beginning. As the function converges, the effect diminishes-- Converging to the global optimum.
+  \item Efficient designs fill the whole region reasonably, thus should converge faster. 
+  \item UniPro tends to converge faster than the rest.
+  \item Maximin performs poorly in Higher dimension than the rest. We perceive this to be due to maximin designs using the euclidean distance yet it is well documented that euclidean distance is a bad measure of distance in higher dimensions. Due to concentration measure.
+\end{enumerate}
+\end{frame}
+
+
+
+
+\begin{frame}{RSO algorithm}
+    \begin{itemize}
+        \item Takes into consideration a controlled parameter $\rho\in(0, 1)$
+        \item Uses $\rho$ to determine the number of top $100\rho\%$ points from the data.
+        \item Computes region of interest (ROI) boundary using the top $100\rho \%$ points as the minimum and maximum of each dimension.
+        \item Shift the region to be centered at the current best $x_t^*$
+        \item carry out EGO and add $m$ points.
+        \item When converged, set the ROI to the entire domain space and carry out the EGO one more time.
+    \end{itemize}
+\end{frame}
+
+\begin{frame}{Results -- Branin Minimization Path}
+\begin{enumerate}
+  \item Our method performs fairly better than the existing methods.
+  \item Generalizable in optimization.
+  \item Use method in UniPro construction.
+\end{enumerate}
+\end{frame}
+
+
+\begin{frame}{Methods Comparison Boxplots}
+\begin{enumerate}
+  \item replications = 100
+  \item design size = the target
+  \item Random Design? 1024 runs LHD
+  \item Grid search? $4^5$ FFD -- Use $x^*$ to generate 100 replicates
+  \item DE1 Specific parameters pMut=0.1,pCR=0.5, pGBest = 0.95
+  \item DE4 pMut=0.1, pCR=0.5, pGbest=0.5 
+  \item RSO -- start with LHD(25 points), add 25points-- 50 points
+  \item DEoptim -- $2^{nd}$ Order Model. OACD with 50 runs. Optimize for pCR = 1-pMut
+  \item why RSO over DEoptim? 
+\end{enumerate}
+\end{frame}
+
+
+
+\end{document}

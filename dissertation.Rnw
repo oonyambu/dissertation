@@ -1,0 +1,22 @@
+\documentclass [PhD] {package/uclathes}
+
+\preamble
+\frontpage
+\acknowledgments
+\abstract
+
+
+\begin{document}
+
+\makeintropages
+\introduction
+
+\SweaveInput{chapters/DE/DE_processed.Rnw}
+\SweaveInput{chapters/EGO/EGO_processed.Rnw}
+\SweaveInput{chapters/RSO/RSO_processed.Rnw}
+
+\conclusion
+
+\reference{2}
+
+\end {document}

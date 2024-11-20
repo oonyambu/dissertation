@@ -1,0 +1,64 @@
+% DO NOT DELETE THIS
+\newcommand{\noindenthack}{\noindent}
+
+
+%===================================
+% ADD AFTER THIS
+
+\usepackage[utf8]{inputenc}
+
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{tikz}
+\usepackage{hyperref}
+\usepackage{subcaption}
+\usepackage[margin=2cm]{geometry}
+\usepackage[style=authoryear, sorting=nyt, backend=bibtex, sortcites=true]{biblatex}
+\usepackage{Sweave}
+\usepackage{makecell}
+\usepackage{algpseudocode}
+\usepackage{algorithm}
+\usepackage{booktabs, multirow}
+\usepackage[font=small]{caption}
+\usepackage{changepage}
+
+\usepackage{fullpage}
+\renewcommand{\baselinestretch}{1.25}% {1.25}
+\renewcommand{\arraystretch}{1.1}
+\renewcommand{\tabcolsep}{4pt}
+
+%% trace revision using color
+\newcommand{\reva}[1]{{\color{red} #1}}
+\newcommand{\revb}[1]{{\color{blue} #1}}
+\newcommand{\revc}[1]{{\color{cyan} #1}}
+\newcommand{\revd}[1]{{\color{blue} #1}}
+\newcommand{\reve}[1]{{\color{blue} #1}}
+
+
+\usepackage{amsmath,amssymb}
+\newcommand{\X}{\boldsymbol{X}}
+\newcommand{\Y}{\boldsymbol{Y}}
+\newcommand{\x}{\boldsymbol{x}}
+\renewcommand{\u}{\boldsymbol{u}}
+\newcommand{\y}{\boldsymbol{y}}
+\newcommand{\z}{\boldsymbol{z}}
+\newcommand{\w}{\boldsymbol{w}}
+\newcommand{\R}{\boldsymbol{R}}
+\newcommand{\Rinv}{\boldsymbol{R}^{-1}}
+\renewcommand{\r}{\boldsymbol{r}}
+\newcommand{\one}{\mathbf{1}}
+\newcommand{\cov}{\textrm{Cov}}
+
+\addbibresource{include/reference.bib}
+
+
+% \DeclareCiteCommand{\textcite}
+%   {\usebibmacro{prenote}}
+%   {\usebibmacro{citeindex}%
+%    \printtext[bibhyperref]{%
+%    \printnames{labelname}%
+%    \setunit{\addspace}%
+%    \printtext{(\printfield{year})}}}
+%   {\multicitedelim}
+%   {\usebibmacro{postnote}}
