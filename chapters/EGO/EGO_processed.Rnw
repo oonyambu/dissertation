@@ -1,0 +1,1131 @@
+%\documentclass[12pt]{article}
+%\usepackage[utf8]{inputenc}
+%\usepackage{amsmath}
+%\usepackage{amssymb}
+%\usepackage{graphicx}
+%\usepackage{makecell}
+%\usepackage{algpseudocode}
+%\usepackage{algorithm}
+%\usepackage{tikz}
+%\usepackage{hyperref}
+%\usepackage{subcaption}
+%\usepackage[margin=2cm]{geometry}
+%\usepackage{booktabs, multirow}
+%\usepackage[font=small]{caption}
+%\usepackage{changepage}
+%%\usepackage[style=authoryear, sorting=nyt, backend=bibtex, natbib,sortcites=true]{biblatex} % do not use backend=biber
+%\usepackage[style=authoryear, backend=bibtex, sortcites=true]{biblatex} % use backend=bibtex
+%%\title{\bf Design Evaluation using Gaussian Process for Prediction and Optimization}
+\chapter{Evaluating Space-Filling Designs for Prediction and Sequential Optimization}
+%\author{Samuel Onyambu, Honquan Xu}
+%\date{}
+%
+%
+%\addbibresource{reference.bib}
+%
+%\usepackage{fullpage}
+%\renewcommand{\baselinestretch}{1.25}% {1.25}
+%\renewcommand{\arraystretch}{1.1}
+%\renewcommand{\tabcolsep}{4pt}
+%
+%%% trace revision using color
+%\newcommand{\reva}[1]{{\color{red} #1}}
+%\newcommand{\revb}[1]{{\color{blue} #1}}
+%\newcommand{\revc}[1]{{\color{violet} #1}}
+%\newcommand{\revd}[1]{{\color{blue} #1}}
+%
+%\usepackage{amsmath,amssymb}
+%
+%\newcommand{\X}{\boldsymbol{X}}
+%\newcommand{\Y}{\boldsymbol{Y}}
+%\newcommand{\x}{\boldsymbol{x}}
+%\renewcommand{\u}{\boldsymbol{u}}
+%\newcommand{\y}{\boldsymbol{y}}
+%\newcommand{\z}{\boldsymbol{z}}
+%\newcommand{\w}{\boldsymbol{w}}
+%\renewcommand{\r}{\boldsymbol{r}}
+%\newcommand{\R}{\boldsymbol{R}}
+%\newcommand{\Rinv}{\boldsymbol{R}^{-1}}
+%\newcommand{\one}{\mathbf{1}}
+%\newcommand{\cov}{\textrm{Cov}}
+%
+%%% rename criteria, need to update plotting.R and pdfs
+%
+%
+%
+%
+%
+%\begin{document}
+%
+%
+%\maketitle
+%\begin{abstract}
+%Space-filling designs are widely used for prediction and optimization in computer experiments. Various types of space-filling designs have been proposed in the literature.
+%This study examines the impact of initial design choices on the prediction and optimization of test functions through a sequential optimization approach. By using Gaussian processes for modeling diverse data and active learning for efficient data point selection, the method enhances accuracy with fewer evaluations. Initial designs significantly influence early optimization, but their effect diminishes as iterations progress toward the global optimum.  While distance-based designs like maximin distance designs underperform in higher dimensions, uniform designs and uniform projection designs demonstrate consistent robustness. These findings emphasize the importance of selecting effective design strategies for high-dimensional prediction and optimization.
+%\end{abstract}
+%
+%\SweaveOpts{concordance=FALSE, prefix=FALSE, echo=FALSE, fig=TRUE}
+%
+\section{Introduction}
+
+\SweaveOpts{concordance=FALSE, prefix=FALSE, echo=FALSE, fig=TRUE}
+<<fig=false>>=
+ dr <- getwd()
+ setwd('chapters/EGO/')
+if(!dir.exists('pdfs'))dir.create('pdfs')
+@
+
+In optimization and experimental design, selecting the right strategy is key to achieving precise and efficient results, particularly in methods like Gaussian processes (GP) and Efficient Global Optimization (EGO). These techniques rely heavily on initial designs to guide optimization and improve predictive accuracy. Although the Latin hypercube design (LHD) \parencite{mckay1979comparison} is a commonly used space-filling strategy for computer experiments, research suggests that alternative designs may outperform it in certain cases, especially for screening and prediction tasks \parencite{welch1992screening}. Studies have explored various design strategies, finding that even subtle differences in design can significantly affect performance \parencite{chen2016analysis}.
+
+The choice of design is particularly important in complex systems, including fields like engineering and machine learning. Prior research has highlighted how design strategies can impact the performance of Gaussian processes, emphasizing the importance of selecting appropriate methods for high-dimensional problems \parencite{harari2014optimal}.
+
+In a sequential optimization such as EGO, as optimization progresses, the GP model is updated with additional sample points, reducing the influence of the initial design. Nevertheless, the initial design strategy remains crucial in determining the speed and accuracy of convergence. Choosing the appropriate design strategy for a given problem is essential for enhancing both predictive performance and optimization efficiency.
+
+The objective of this paper is to evaluate which space-filling designs offer greater efficiency and robustness for both prediction and optimization.
+Various types of space-filling designs have been proposed in the literature. They include LHDs, maximin distance designs \parencite{johnson1990minimax, morris1995exploratory}, orthogonal array-based designs \parencite{tang1993orthogonal, xiao2018construction}, uniform designs \parencite{fang2000uniform}, maximum projection designs \parencite{joseph2015maximum},  and uniform projection designs \parencite{sun2019uniform}.
+Traditionally, comparisons have been focused on LHDs and maximin distance LHDs. With new software developments, we now compare the performance of other types of space-filling designs, including maximum projection designs, uniform designs, and uniform projection designs.
+
+Recent studies, such as those by \textcite{shi2023evaluating}, have evaluated space-filling designs in deep neural network predictions, but our research extends this by focusing on their performance in optimization as well. We assess both predictive and minimization capabilities using deterministic test functions, with GP models serving as surrogates and the expected improvement method guiding optimization.
+
+This study evaluates the effectiveness of various space-filling design strategies, particularly in high-dimensional prediction and optimization tasks. % It aims to identify designs that offer the best balance between robustness and computational efficiency.
+We find that uniform designs and uniform projection designs, especially those using the centered $L_2$-discrepancy criterion with 16 levels or more,  demonstrate consistent robustness and they often outperform other types of space-filling designs. In contrast, distance-based designs like maximin distance designs underperform in higher dimensions.
+These findings emphasize the importance of selecting effective design strategies for high-dimensional prediction and optimization.
+
+%Designing for higher-dimensional spaces poses unique challenges. Maximin designs, while effective at evenly distributing points in low dimensions, struggle in higher dimensions due to limitations of Euclidean distance as a metric. In contrast, uniform designs and uniform projection designs, based on the centered L2-discrepancy criterion, offer superior robustness. These designs maintain efficiency in high-dimensional spaces, where traditional methods often fail, by allowing flexible level adjustments to improve exploration.
+
+%Although uniform designs reduce root mean square error (RMSE) in prediction tasks, they are computationally expensive to generate for large designs. Uniform projection designs, however, retain the advantages of uniform designs while being simpler to construct, offering a more feasible solution for large-scale, high-dimensional optimization tasks.
+
+The paper is organized as follows.
+Section 2 provides background on the GP surrogate model and active learning techniques. Section 3 reviews various types of space-filling designs, followed by Section 4, which describes the test functions used. Section 5 presents experimental results, and Section 6 concludes with key findings and recommendations for future optimization challenges.
+
+\section{Background}
+
+\subsection{The surrogate model}
+Gaussian Processes (GPs) are well-regarded for their flexibility and accuracy in regression tasks, providing a probabilistic framework that accounts for uncertainties in predictions \parencite{snelson2008flexible}. The kriging model, proposed by South African geostatistician \textcite{krige1951statistical}, is taken to be one of the surrogate models used in modelling the data. Kriging is one of the methods used to interpolate intermediate values, whereby these intermediate values are modeled using  GP which is governed by prior co-variances.  It provides a probabilistic prediction of the output variable, as well as an estimate of the uncertainty of the prediction \parencite{chevalier2014kriginv}. The kriging predictors interpolating the observations are assumed to be noise-free \parencite{roustant2012dicekriging}. Intermediate interpolated values obtained by kriging are the best linear unbiased predictors. % One can either fit simple kriging or universal kriging model.
+
+The  kriging model is
+\begin{equation*}\label{eq:SK}
+      Y(\x) = \mu(\x) + Z(\x),
+\end{equation*}
+where $\mu(\x)$ is a trend function and \(Z(\x)\) is a stationary GP with zero mean.
+The ordinary kriging  assumes that the trend is a constant, i.e.,  $\mu(\x)=\mu$, while the universal kriging assume that the trend is a linear combination of some basis functions.
+
+The stationary GP $Z(\x)$ is determined by its covariance structure $\cov(\x_i, \x_j) = \sigma^2 r(\x_i, \x_j)$ where $\sigma^2$ is the common variance and $r(\x_i, \x_j)$ is the correlation between $\x_i$ and $\x_j$. It is often assumed that $r(\x_i, \x_j)$ is a decreasing function of some distance. Various correlation functions can be used in the fitting of the kriging model. Here, we make use of the Mat\'ern 5/2 correlation function. We fit an ordinary kriging with the constant trend.  \textcite{chen2016analysis} showed that a regression model more complex than a constant mean either has little impact on prediction accuracy or is an impediment and that the choice of correlation function has modest effect, but there is little to separate two common choices, the power exponential and the Mat\'ern, if the latter is optimized with respect to its smoothness.
+
+Given $n$ design points $\{\x_1, \ldots, \x_n\}$ and the response $\y=(y_1, \ldots, y_n)$,  let $\R=(r(\x_i, \x_j))$ be the $n \times n$ correlation matrix.
+In this setup, for the ordinary kriging, the $\mu$ and $\sigma^2$ are estimated as follows:
+\begin{equation} \label{eq:mu_sigma}
+\hat\mu = \frac{\mathbf{1}^\top \Rinv \y}{\mathbf{1}^\top \Rinv \mathbf{1}},\quad\quad\hat\sigma^2 = \frac{1}{n}(\y-\hat\mu \one)^\top \Rinv(\y-\hat\mu \one)
+\end{equation}
+
+ For any point $\x$, let $\r(\x)=(r(\x, \x_1), \ldots, r(\x, \x_n))^\top$. Then the best linear unbiased predictor (BLUP) of $Y(\x)$  is
+\begin{equation} \label{eq:yhat}
+%y_hat <- mu +  solve(R, r)%*%(y - mu)
+\hat y(\x) = \hat\mu  + \r(\x)^\top \Rinv(\y - \hat\mu \one),
+\end{equation}
+where \(\hat\mu\) is given in \eqref{eq:mu_sigma}.
+The variance of the BLUP is
+\begin{equation} \label{eq:s2}
+s^2 (\x) = \sigma^2 \left[1 - \r(\x)^\top \Rinv \r(\x) + \frac{(1 - \mathbf{1}^\top \Rinv \r(\x))^2}{\mathbf{1}^\top\Rinv\mathbf{1}} \right]
+\end{equation}
+and $\sigma^2$ can be estimated from the data as given in \eqref{eq:mu_sigma}.
+
+\subsection{The expected improvement (EI)}
+The expected improvement is a measure of how promising a particular set of inputs is in terms of improving the objective function value. To quantify this measure, the objective function needs to be evaluated at various points, yet these evaluations are quite costly. Often when the evaluation of the objective function is costly, the need of specific strategies to optimize these functions arises. In most of these evaluations, the non-availability of derivatives prevents the use of gradient based techniques. Similarly, the use of meta-heuristics (e.g., genetic algorithm) is compromised due to severely limited evaluation budgets \parencite{roustant2012dicekriging}.  In order to curb these limitations, \textcite{jones1998efficient} proposed the use of kriging model as the surrogate model to estimate the expected improvement of selecting a new set of inputs over the current best solution. When carrying out minimization for example, the improvement at a new point  $\x$ is
+$$ I(\x)=\max(y_{min} - Y(\x), 0), $$
+where $y_{min} = \min(y_1,\dots, y_n)$ is the existing minimum value. The new point will bring a positive improvement if $Y(\x)$ is less than $y_{min}$, and an improvement of 0 otherwise. % In this case $n$ denotes the current number of observations in our design matrix $\X$.
+The expected improvement (EI) is simply the expectation of $I(\x)$, that is,
+$$
+\mathrm{E}[I(\x)] = \mathrm{E}\left[\max(y_{min} - Y(\x), 0)\right] .
+$$
+
+Under the ordinary kriging, $Y(\x)$ follows a normal distribution with mean $\hat y(\x)$ and variace $s^2(\x)$ given in \eqref{eq:yhat} and \eqref{eq:s2}, respectively.
+Then one can express EI in a closed form \parencite{jones1998efficient}:
+$$
+\mathrm{E}[I(\x)] =(y_{min} -\hat y(\x)) \Phi\left(\frac{y_{min}-\hat y(\x)}{s(\x)}\right)+s(\x) \phi\left(\frac{y_{min}-\hat y(\x)}{s(\x)}\right),
+$$
+where $\Phi$ and $\phi$ are the cumulative and probability density function of the standard normal distribution, respectively.
+The EI criterion has important properties for sequential exploration: It is null at the already visited sites, and non-negative everywhere else with a magnitude that is increasing with $s(\x)$ and decreasing with $\hat y(\x)$ \parencite{jones1998efficient}. This guides the selection of the next set of inputs to evaluate. It encourages the exploration of regions with high uncertainty (large predicted variances) and  exploitation of regions with potentially high rewards (small predicted means).
+ The mean function and variance function of the Gaussian process are typically smooth as they are constructed based on a combination of smooth kernel functions and observed data.
+The cumulative distribution function \(\Phi(z)\) and the probability density function \(\phi(z)\) of the standard normal distribution, are also smooth functions. These functions are well-defined and infinitely differentiable for all real values of $z$. Therefore, combining these smooth components in the closed form EI expression results in a smooth function overall. This smoothness property of the closed form EI enables the use of gradient-based optimization methods, in particular, the L-BFGS (Limited memory Broyden-Fletcher-Goldfarb-Shanno) optimization algorithm, to search for the point of maximum expected improvement efficiently within a specified constrained domain.
+
+
+\subsection{The Efficient Global Optimization (EGO) Algorithm}
+
+This optimization method sequentially builds upon the EI criterion. EGO enhances this modeling process by intelligently selecting the most informative data points for evaluation. Rather than passively using a fixed dataset, EGO iteratively queries the objective function, focusing on areas that maximize information gain. This targeted approach reduces the number of expensive evaluations needed, accelerating the learning process. EGO \parencite{jones1998efficient} leverages the surrogate GP model to find the global optimum of the objective function. Using EI as the acquisition function, EGO balances the trade-off between exploring new regions of the design space and exploiting known promising areas. This results in a more efficient optimization process that converges on optimal solutions with fewer evaluations.
+
+Algorithm \ref{alg:cap} summarizes the procedure.
+Starting with an initial design $\X$ (typically, a Latin hypercube design), EGO sequentially visits a current global maximizer of EI and updates the metamodel at each iteration, including hyperparameters re-estimation \parencite{roustant2012dicekriging}. This is done until convergence or until the budgets are exhausted.
+
+\begin{algorithm}[H]
+    \caption{EGO algorithm}\label{alg:cap}
+    \begin{algorithmic}
+        \Require $\X$, $f$ = function to be minimized, $n_{new}$=number of points to add
+        \State Evaluate $f$ at the design points $\X$; $\y=f(\X)$
+        \State Build a kriging model based on $\X$ and $\y$
+
+    \For{$i$ in $1$ to $n_{new}$}
+        \State Find $\x^* \gets \arg\max_{\x}\mathrm{E}[I(\x)]$
+        \State Evaluate $y^* \gets f(\x^*)$
+        \State Update $\X$ and $\y$ with the new point $\x^*$ and response $y^*$
+        \State Update the kriging model
+\EndFor
+\State Return $\X, \y$
+\end{algorithmic}
+\end{algorithm}
+
+The EGO algorithm has been shown to be effective and has been adopted in many computer experiments and are nowadays considered as reference global optimization methods in dimension $m\le 10$ in cases where the number of objective function evaluations is drastically limited \parencite{jones2001taxonomy}.
+
+
+\section{Space-Filling Designs}\label{sec:designs}
+We briefly review various types of space-filling designs.
+
+\textbf{Latin Hypercube Design (LHD):}
+ Based on \textcite{mckay1992latin}'s Latin hypercube sampling, it divides the range of each factor into  bins of equal size, where $n$ also corresponds to the number of samples to be generated resulting in a total of $n^m$ combinations where $m$ is the number of factors  being considered. The $n$ samples are then randomly generated such that for all one-dimensional projections, there will be only one sample in each bin.
+ In this paper, the random Latin hypercube sampling was used to generate the random LHD  with levels $0,\cdots,n-1$. In R, this was accomplished using the `lhs' package. The following command generates an LHD with $n$ runs and $m$ factors.
+<<eval=FALSE, echo=TRUE>>=
+floor(lhs::randomLHS(n, m) * n)
+@
+
+\textbf{Maximin Distance Designs}:
+ Introduced by \textcite{johnson1990minimax}, this design aims at spreading out the design points in the design space by maximizing the minimum distance between any two design points. It thus tends to place a large proportion of points at the corners and on the boundaries of the design space. Mathematically, this can be formulated as follows. Suppose we want to construct an $n$-run design in $m$ factors, say $D=\left\{\x_1 \ldots, \x_n\right\}$, where $\x_i$ represnts the $i$th run. The maximin distance design optimizes the function below:
+\begin{equation}\label{eqn:maximin}
+\max _D \min _{i < j} d\left(\x_i, \x_j\right),
+\end{equation}
+where $d\left(\x_i, \x_j\right)$ is the distance between the points $\x_i$ and $\x_j$. Here we use the Euclidean distance, i.e., $d\left(\x_i, \x_j\right) = \sqrt{\sum_{l=1}^m(x_{il} - x_{jl})^2}$.
+
+
+\textbf{Maximin LHD}: Introduced by \textcite{morris1995exploratory} these designs combine the principles of Latin Hypercube Sampling (LHS) and the maximin distance criterion to optimize the spread of sample points across the design space. This hybrid approach ensures that points are uniformly distributed in each dimension, while also maximizing the minimum distance between any two points in the design. For computational purpose, \textcite{morris1995exploratory} also reformatted the maximin criterion as a minimization problem  given as:
+\begin{equation}\label{eqn:maximinLHD}
+\min _{D} \phi_p(D) = \left\{\sum_{i=1}^{n-1} \sum_{j=i+1}^n \frac{1}{d^p\left(\x_i, \x_j\right)}\right\}^{1 / p}
+\end{equation}
+where $p> 0$ is chosen large enough so that the resulting design achieves maximin distance. We use the SLHD package to generate maximin LHDs because they are better than those  generated from the lhs package using the function maximinLHS. The following command generates a maximin LHD with $n$ runs and $m$ factors.
+<<eval=FALSE, echo=true>>=
+SLHD::maximinSLHD(t = 1, n, m)$Design - 1
+@
+
+
+\textbf{Maximum Projection Design (Maxpro Design)}: Although maximin LHDs ensure good space-filling in $m$ dimensions and uniform projections in each dimension, their projection properties in two to $m - 1$ dimensions are not known \parencite{joseph2015maximum}.
+By the effect sparsity principle \parencite{wu2011experiments}, only a few factors are expected to be important. To curb this, \textcite{joseph2015maximum} proposed the maximum projection (MaxPro) criterion:
+ \begin{equation}\label{eqn:MaxPro}
+\min _D \psi(D)=\left\{\frac{2}{n(n-1)} \sum_{i=1}^{n-1} \sum_{j=i+1}^n \frac{1}{\prod_{l=1}^m\left(x_{i l}-x_{j l}\right)^2}\right\}^{1 / m} .
+\end{equation}
+{They argued} that the design that minimizes $\psi(D)$ tends to maximize its projection capability in all sub spaces of factors, and thus named these designs as maximum projection designs. %In R the MaxPro package was used to generate these designs.
+We use the MaxPro package to generate a MaxPro LHD with $n$ runs and $m$ factors.
+<<eval=FALSE, echo=TRUE>>=
+MaxPro::MaxProLHD(n, m)$Design  * n - 0.5
+@
+
+
+\textbf{Uniform Design (UD)}: These designs seek to scatter points uniformly on the domain. This is often achieved by minimizing the centered $L_2$-discrepancy of the  design \parencite{fang2000uniform}. For an $n \times m$ design $D=\left(x_{i k}\right)$ with $s$ levels, denoted by $0,\cdots, s-1$, its (squared) centered $L_2$-discrepancy is defined as
+\begin{equation}\label{eqn:cd}
+\begin{aligned}
+  \mathrm{CD}(D)= & \frac{1}{n^2} \sum_{i=1}^n \sum_{j=1}^n
+  \prod_{k=1}^m\left(1+\frac{1}{2}\left|z_{i k}\right| +
+  \frac{1}{2}\left|z_{j k}\right| -
+  \frac{1}{2}\left|z_{i k}-z_{j k}\right|\right) \\
+  & -\frac{2}{n} \sum_{i=1}^n \prod_{k=1}^m\left(1+\frac{1}{2}
+  \left|z_{i k}\right|-\frac{1}{2}\left|z_{i k}\right|^2\right)+
+  \left(\frac{13}{12}\right)^m,
+  \end{aligned}
+  \end{equation}
+where $z_{i k}=\left(2 x_{i k}-s+1\right) /(2 s)$.
+We use the R package UniDOE to generate UDs.
+The following command generates a UD with $n$ runs, $m$ factors, and $s$ levels.
+<<eval=FALSE, echo=TRUE>>=
+UniDOE::GenUD(n, m, s)$final_design - 1
+@
+The UniDOE package uses the threshold accepting algorithm to generate UDs, which often takes an excessive time in comparison with the construction of maximin and MaxPro LHDs. Thus we only used UDs for prediction, not optimization.
+
+The UniDOE package was removed from the CRAN (Comprehensive R Archive Network) repository in 2021 as it was no longer maintained and problems were not corrected on time. Though one can still be able to install it from github.
+
+\textbf{Uniform Projection Design (UPD)}:
+Proposed by \textcite{sun2019uniform}, this design solely focuses on  two-dimensional projections. This is due to two factor interactions being more important than three-factor or higher-order interactions. The motivating idea is that although designs with low discrepancy have good uniformity in the full-dimensional space, they can have bad projections in lower dimensional spaces, which is undesirable when only a few factors are active. Thus it is preferable to have a design with better projection properties. The uniform projection (UniPro) criterion  is defined using the centered $L_2$-discrepancy as follows:
+\begin{equation}\label{eqn:UniPro}
+  \phi(D)=\frac{2}{m(m-1)} \sum_{|u|=2} \mathrm{CD}\left(D_u\right),
+\end{equation}
+where $u$ is a subset of $\{1,2, \ldots, m\},|u|$ denotes the cardinality of $u$ and $D_u$ is the projected design of $D$ onto dimensions indexed by the elements of $u$. The $\phi(D)$ is the average centered $L_2$-discrepancy values of all two-dimensional projections of $D$. The UPD scatters points uniformly in all dimensions and have good space-filling properties in terms of distance, uniformity and orthogonality \parencite{sun2019uniform}. We use the UniPro package and the Differential Evolution algorithm to generate UPDs. The following command generates a UPD with $n$ runs, $m$ factors, and $s$ levels.
+<<eval=FALSE, echo=TRUE>>=
+UniPro::UniPro(n, m, s)$xbest - 1
+@
+Note that the SLHD and MaxPro packages can only generate LHDs while the UniDOE and UniPro packages can generate balanced multi-level UDs and UPDs as long as the number of runs is a multiple of the number of levels.
+
+\section{Test Functions}
+To test the efficiency of various space-filling designs, two methods were analyzed. First the efficiency of the designs was analysed via its predictability efficiency. Here the objective was  to minimize the prediction root mean square error (RMSE) to ensure accurate and reliable predictions. The second method was to look at designs through the problem of minimization convergence. Under these two methods, various test functions were taken into consideration.
+
+
+\subsection{Prediction Functions}
+
+\textbf{Currin}: This is a simple two dimensional polynomial function evaluated on the square $[0,1]^2$ used for illustrating methods of modeling computer experiment output \parencite{currin1991bayesian}. It has the form: % \parencite{simulationlib}:
+\begin{equation*}
+f(\x)=4.90+21.15 x_1-2.17 x_2-15.88 x_1^2-1.38 x_2^2-5.26 x_1 x_2 .
+\end{equation*}
+
+
+\textbf{Circuit}: This is a six-dimensional function that models an output transformerless push-pull circuit \parencite{simulationlib} with the response being the midpoint voltage. It takes the following form:
+\begin{equation*}
+\begin{gathered}
+f(\x)=\frac{\left(V_{b 1}+0.74\right) \beta\left(R_{c 2}+9\right)}{\beta\left(R_{c 2}+9\right)+R_f}+\frac{11.35 R_f}{\beta\left(R_{c 2}+9\right)+R_f}+\frac{0.74 R_f \beta\left(R_{c 2}+9\right)}{\left(\beta\left(R_{c 2}+9\right)+R_f\right) R_{c 1}},  \\
+\text { where } V_{b 1}=\frac{12 R_{b 2}}{R_{b 1}+R_{b 2}}.
+\end{gathered}
+\end{equation*}
+The variables are of different domains: $R_{b1} \in [50, 150]$,  $R_{b2} \in [25, 70]$,  $R_{f} \in [0.5, 3]$,  $R_{c1} \in [1.2, 2.5]$,  $R_{c2} \in [0.25, 1.2]$ and  $\beta \in [50, 300]$.
+
+
+\textbf{Piston}: This is a seven-dimensional function that models the circular motion of a piston within a cylinder. It involves a chain of nonlinear functions with the response $f(\x)$ being the cycle time \parencite{simulationlib}. It takes the following form:
+\begin{equation*}
+\begin{gathered}
+f(\x)=2 \pi \sqrt{\frac{M}{k+S^2 \frac{P_0 V_0}{T_0} \frac{T_a}{V^2}}},  \\
+ V=\frac{S}{2 k}\left(\sqrt{A^2+4 k \frac{P_0 V_0}{T_0} T_a}-A\right)
+\text { and } A=P_0 S+19.62 M-\frac{k V_0}{S},
+\end{gathered}
+\end{equation*}
+where $M \in[30,60]$ is piston weight (kg), $S \in[0.005,0.020]$ is piston surface area $\left(\mathrm{m}^2\right)$,  ${V}_0 \in[0.002,0.010]$ is initial gas volume $\left(\mathrm{m}^3\right)$, ${k} \in[1000,5000]$ is spring coefficient $(\mathrm{N} / \mathrm{m})$, $P_0 \in[90000,110000]$ is  atmospheric pressure $\left(\mathrm{N} / \mathrm{m}^2\right)$, ${T}_{{a}} \in[290,296]$ is ambient temperature $(\mathrm{K})$ and ${T}_0 \in[340,360]$ is filling gas temperature $(\mathrm{K})$.
+
+
+\textbf{Borehole}: This is a 8-dimensional function that models water flow through a borehole with the response being water rate flow in $m^3/$yr  \parencite{simulationlib}. It takes the following form:
+\begin{equation*}
+f(\x)=\frac{2 \pi T_u\left(H_u-H_l\right)}{\ln \left(r / r_w\right)\left(1+\frac{2 L T_u}{\ln \left(r / r_w\right) r_w^2 K_w}+\frac{T_u}{T_l}\right)}.
+\end{equation*}
+The variable names and their corresponding domains are given as follows: \\
+
+\begin{center}
+\begin{tabular}{|l|l|}
+\hline
+\textbf{Domain} & \textbf{Variable Name} \\
+\hline$r_w \in[0.05,0.15]$ & radius of borehole $(\mathrm{m})$   \\
+\hline $\mathrm{r} \in[100,50000]$ & radius of influence $(\mathrm{m})$ \\
+\hline $\mathrm{T}_{\mathrm{u}} \in[63070,115600]$ & transmissivity of upper aquifer $\left(\mathrm{m}^2 / \mathrm{yr}\right)$ \\
+\hline $\mathrm{H}_{\mathrm{u}} \in[990,1110]$ & potentiometric head of upper aquifer $(\mathrm{m})$ \\
+\hline $\mathrm{T}_{\mathrm{I}} \in[63.1,116]$ & transmissivity of lower aquifer $\left(\mathrm{m}^2 / \mathrm{yr}\right)$  \\
+\hline $\mathrm{H}_{\mathrm{I}} \in[700,820]$ & potentiometric head of lower aquifer $(\mathrm{m})$  \\
+\hline $\mathrm{L} \in[1120,1680]$ & length of borehole $(\mathrm{m})$ \\
+\hline $\mathrm{K}_{\mathrm{w}} \in[9855,12045]$ & hydraulic conductivity of borehole $(\mathrm{m} / \mathrm{yr})$ \\
+\hline
+\end{tabular}
+\end{center}
+
+\iffalse %%
+\begin{tabular}{|l|l|l|}
+\hline
+\textbf{Domain} & \textbf{Variable Name} & \textbf{Distribution}\\
+\hline$r_w \in[0.05,0.15]$ & radius of borehole $(\mathrm{m})$ & $N(\mu=0.10, \sigma=0.0161812)$  \\
+\hline $\mathrm{r} \in[100,50000]$ & radius of influence $(\mathrm{m})$ & Lognormal $(\mu=7.71, \sigma=1.0056)$\\
+\hline $\mathrm{T}_{\mathrm{u}} \in[63070,115600]$ & transmissivity of upper aquifer $\left(\mathrm{m}^2 / \mathrm{yr}\right)$ & Uniform[63 070, 115 600] \\
+\hline $\mathrm{H}_{\mathrm{u}} \in[990,1110]$ & potentiometric head of upper aquifer $(\mathrm{m})$ & Uniform[990, 1110]\\
+\hline $\mathrm{T}_{\mathrm{I}} \in[63.1,116]$ & transmissivity of lower aquifer $\left(\mathrm{m}^2 / \mathrm{yr}\right)$ & Uniform[63.1, 116] \\
+\hline $\mathrm{H}_{\mathrm{I}} \in[700,820]$ & potentiometric head of lower aquifer $(\mathrm{m})$ & Uniform[700, 820] \\
+\hline $\mathrm{L} \in[1120,1680]$ & length of borehole $(\mathrm{m})$ & Uniform[1120, 1680]\\
+\hline $\mathrm{K}_{\mathrm{w}} \in[9855,12045]$ & hydraulic conductivity of borehole $(\mathrm{m} / \mathrm{yr})$ & Uniform[9855, 12 045] \\
+\hline
+\end{tabular}
+\fi %%
+
+
+\textbf{G-function}: This is an $m$-dimensional function designed by Ilya M. Sobol to study the sensitivity of complex mathematical models and is particularly useful for benchmarking and validating global sensitivity analysis methods. It has the form:
+\begin{equation*}
+f(\x)=\prod_{i=1}^m \frac{\left|4 x_i-2\right|+a_i}{1+a_i},
+\end{equation*}
+where $\x=\left(x_1, x_2, \ldots, x_m\right)$ is a vector of input variables, each typically in the range $[0,1]$ and $a_i=i/2-1$, for all $i=1, \ldots, m$, are coefficients that determine the sensitivity of the function to the $i$th input variable. Larger values of $a_i$ indicate less sensitivity to the corresponding input.
+
+
+
+\textbf{Wing weight}: This is a function that models a light aircraft wing with the response being the wing's weight.
+\begin{equation*}
+f(\x)=0.036 S_w^{0.758} W_{f w}^{0.0035}\left(\frac{A}{\cos ^2(\Lambda)}\right)^{0.6} q^{0.006} \lambda^{0.04}\left(\frac{100 t_c}{\cos (\Lambda)}\right)^{-0.3}\left(N_z W_{d g}\right)^{0.49}+S_w W_p,
+\end{equation*}
+where $S_W \in[150,200]$ is wing area (ft$^2$), $W_{f w} \in[220,300]$ is weight of fuel in the wing $(\mathrm{lb})$, $A \in[6,10]$ is aspect ratio, $\Lambda \in[-10,10]$ is quarter-chord sweep (degrees), $q \in[16,45]$ is dynamic pressure at cruise $\left(\mathrm{lb} / \mathrm{ft}^2\right)$, $\lambda \in[0.5,1]$ is taper ratio, $t_c \in[0.08,0.18]$ is aerofoil thickness to chord ratio, $\mathrm{N}_{\mathrm{Z}} \in[2.5,6]$ is ultimate load factor, $W_{d g} \in[1700,2500]$ is flight design gross weight $(\mathrm{lb})$ and $W_p \in[0.025,0.08]$ is paint weight $\left(\mathrm{lb} / \mathrm{ft}^2\right)$.
+
+
+\textbf{Oakley \& O'hagan (2004)}: This is a 15-dimensional function that take the following form:
+\begin{equation*}
+f(\x)=\mathbf{a}_1^T \x+\mathbf{a}_2^T \sin (\x)+\mathbf{a}_3^T \cos (\x)+\x^T \mathbf{M} \x,
+\end{equation*}
+where the $\mathbf{a}$-coefficients are chosen so that 5 of the input variables contribute significantly to the output variance, 5 have a much smaller effect, and the remaining 5 have almost no effect on the output variance. Values of the coefficient vectors $\mathbf{a}_1$,$\mathbf{a}_2$ and $\mathbf{a}_3$, and the matrix $\mathbf{M}$, are available at \textcite{simulationlib}.
+
+
+\textbf{Rosenbrock}: % 8d
+The Rosenbrock function is a classic $m$-dimensional optimization problem, also known as the Valley or banana function. The global optimum lays inside a long, narrow, parabolic shaped flat valley \parencite{molga2005test}. To find the valley is trivial, however convergence to the global optimum is difficult and hence this problem has been frequently used to test the performance of optimization algorithms \parencite{picheny2013benchmark}. For comparison, the modified 4d version presented by \textcite{picheny2013benchmark} was used. This modified version has the following form:
+\begin{equation}
+%\begin{gathered}
+f(\mathbf{x})=\frac{1}{3.755 \times 10^5}\left[\sum_{i=1}^3\left(100\left(\bar{x}_{i+1}-\bar{x}_i^2\right)^2+\left(1-\bar{x}_i\right)^2\right)-3.827 \times 10^5\right], \\
+%\end{gathered}
+\end{equation}
+where $\bar{x}_i=15 x_i-5$ for all $i=1,\ldots,4$.
+The test region is usually restricted to  $0 \leq x_i \leq 1$ for $i=1, \ldots, 4$. % with a mean of 0 and variance of 1.
+
+
+\subsection{Minimization Functions}
+
+  \textbf{Branin function}: This is a well-known 2-dimensional function with
+  multiple local minima and global minima introduced by
+  \textcite{dixon1978towards}.
+  It is often used to test optimization
+  algorithms due to its complexity and multi-modal nature. The
+  Branin function has the form
+%\end{itemize}
+\begin{equation*}
+  f(\x)=  f(x_1, x_2)=a\left(x_2-b x_1^2+c x_1-r\right)^2+s(1-t) \cos \left(x_1\right)+s
+\end{equation*}
+where the typical parameter values are
+\(a=1, b=5.1 /\left(4 \pi^2\right), c=5 / \pi, r=6, s=10\) and
+\(t=1 /(8 \pi)\). The function is usually evaluated over the square
+\(x_1 \in[-5,10], x_2 \in[0,15]\). Within this domain the function has 3
+global minima: \(\x^*=(-\pi, 12.275),(\pi, 2.275)\) and
+\((9.42478,2.475)\), with the minimum function value being
+\(f\left(\x^*\right)=0.397887\). The contour plot of the function is as
+shown in Figure \ref{fig:branin}.
+
+<<setup, fig=false>>=
+source("R/plotting.R")
+if(!dir.exists('pdfs'))dir.create('pdfs')
+@
+
+\begin{figure}%[h!tb]
+\centering
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/branin_fun>>=
+vals <- persp_plot(egoOptim::branin, c(-5,10), c(0,15), phi = 30, theta=30, expand = 0.8)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/branin_fun}
+\caption*{(a) 3D plot}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/branin_contour>>=
+do.call(contour, c(vals, nlevels = 100))
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/branin_contour}
+  \caption*{(b) Contour plot}
+\end{subfigure}
+\caption{Branin Function}
+    \label{fig:branin}
+\end{figure}
+
+
+
+\textbf{Camel Six-Hump function}: This is a 2-dimensional function with 6 local minima and 2 global minima evaluated on the rectangle $x_1\in [-3,3]$ and $x_2\in [-2,2]$. It has the form:
+$$
+f(\x)=\left(4-2.1 x_1^2+\frac{x_1^4}{3}\right) x_1^2+x_1 x_2+\left(-4+4 x_2^2\right) x_2^2.
+$$
+The global minima is $f\left(\x^*\right)=-1.0316$ which occurs at  $\x^*=(0.0898,-0.7126)$ and $(-0.0898,0.7126)$.
+
+\begin{figure}%[h!tb]
+\centering
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/camel6_fun>>=
+vals3 <- persp_plot(egoOptim::camel6, c(-3,3), c(-2,2), phi = 30, theta=30, expand = 0.8)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/camel6_fun}
+\caption*{(a) 3D plot}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/camel6_contour>>=
+do.call(contour, c(vals3, nlevels = 100))
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/camel6_contour}
+  \caption*{(b) Contour plot}
+\end{subfigure}
+\caption{Camel Six-Hump Function}
+    \label{fig:camel6}
+\end{figure}
+
+\textbf{Goldstein-Price function}: This is a 2-dimensional function with several local minima evaluated on the rectangle $x_i\in [-2,2]$ for $i=1,2$. It has the form:
+\begin{equation}
+\begin{aligned}
+f(\mathbf{x})= & {\left[1+\left(x_1+x_2+1\right)^2\left(19-14 x_1+3 x_1^2-14 x_2+6 x_1 x_2+3 x_2^2\right)\right] } \\
+& \times\left[30+\left(2 x_1-3 x_2\right)^2\left(18-32 x_1+12 x_1^2+48 x_2-36 x_1 x_2+27 x_2^2\right)\right].
+\end{aligned}
+\end{equation}
+The global minima is $f\left(\x\right) = 3$ at \(\x=(0,-1)^\top\).
+
+\begin{figure}%[h!tb]
+\centering
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/goldpr_fun>>=
+vals2 <- persp_plot(egoOptim::goldpr, c(-2,2), c(-2,2), phi = 30, theta=30, expand = 0.8)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/goldpr_fun}
+\caption*{(a) 3D plot}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/goldpr_contour>>=
+do.call(contour, c(vals2, nlevels = 100))
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/goldpr_contour}
+  \caption*{(b) Contour plot}
+\end{subfigure}
+\caption{Goldstein-Price Function}
+    \label{fig:goldpr}
+\end{figure}
+
+
+\textbf{Ackley function}:
+The Ackley function is a widely used function for testing optimization algorithms \parencite{adorio2005mvf, molga2005test}. In its two-dimensional form, it is characterized by a nearly flat outer region, and a large hole at the centre. The function poses a risk for optimization algorithms, particularly hill climbing algorithms, to be trapped in one of its many local minima \parencite{simulationlib}. The Ackley function has the following form:
+\begin{equation*}
+f(\x)=-a \exp \left(-b \sqrt{\frac{1}{m} \sum_{i=1}^m x_i^2}\right)-\exp \left(\frac{1}{m} \sum_{i=1}^m \cos \left(c x_i\right)\right)+a+\exp (1)
+\end{equation*}
+with the recommended values for $a,b$ and $c$ being $a = 20$, $b=0.2$ and $c = 2\pi$. It is usually evaluated on the hypercube $x_i \in [-32.768, 32.768]$ for all $i=1,\cdots,m$ with a global minimum of $f(\x)=0$ at $x_i = 0$ for $i=1,\cdots,m$.
+
+\begin{figure}%[h!tb]
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/ackley2>>=
+persp_plot(egoOptim::ackley, c(-30,30), phi= 30, theta = 0)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/ackley2}
+\caption{2D Ackley function}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/ackley2zoom>>=
+persp_plot(egoOptim::ackley, c(-2,2), phi= 30, theta = 0)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/ackley2zoom}
+\caption{Zoom on 2D Ackley function}
+\end{subfigure}
+\caption{Ackley function}
+\end{figure}
+
+
+\textbf{Levy function}: This is an $m$-dimensional function often used as a test function for optimization. It is usually evaluated on the hypercube $x_i\in[-10,10]~~\forall i=1,\ldots,m$ and has the global minimum of $f(\x^*)=0$ at $\x^*=(1,\ldots,1)^\top$. It is defined as
+\[
+f(\x)=\sin ^2\left(\pi w_1\right)+\sum_{i=1}^{m-1}\left(w_i-1\right)^2\left[1+10 \sin ^2\left(\pi w_i+1\right)\right]+\left(w_m-1\right)^2\left[1+\sin ^2\left(2 \pi w_m\right)\right],
+\]
+where $w_i=1+(x_i-1)/{4}$ for  $i=1, \ldots, m$.
+
+\begin{figure}%[h!tb]
+\centering
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/levy_10>>=
+persp_plot(egoOptim::levy, c(-10, 10), phi= 30, theta =0)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/levy_10}
+\caption{2D levy Function}
+\end{subfigure}
+\caption{Levy function}
+\end{figure}
+
+\textbf{Michalewicz Function}: This is a multimodal test function with $m!$ local optima for $m$ dimensions. It is characterized by its steep valleys and ridges. The ``steepness" of the valley or edges is defined by the parameter $p$ \parencite{molga2005test}. For larger $p$ it is quite difficult to obtain the optimum as the function values for points in the space outside the narrow peaks give very little to no information on the location of the global optimum. At the same time an increase in dimensionality increases the difficulty due to the increased number of local minima. The function is defined as:
+\begin{equation*}
+f(\x)=-\sum_{i=1}^m \sin \left(x_i\right)\left[\sin \left(\frac{i x_i^2}{\pi}\right)\right]^{2 p}
+\end{equation*}
+with $p$ usually set at $p = 10$ and the domain restricted to $x_i \in [0, \pi]$ for $i = 1,\cdots,m$. The global minimum is approximated to be $f(\x) = -1.8013$ for $m = 2$, $f(\x) = -4.6877$ for $m = 5$ and $f(\x) = -9.6602$ for $m = 10$.
+
+\begin{figure}%[h!tb]
+\centering
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/michal_m1>>=
+persp_plot(\(x)egoOptim::michal(x, m=1), c(0, pi), phi= 30, theta = 100)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/michal_m1}
+\caption{2D Michalewicz function for \(p = 1\)}
+\end{subfigure}
+\hfill
+\begin{subfigure}[b]{0.4\textwidth}
+\centering
+<<include=false, label=pdfs/michal_m10>>=
+persp_plot(egoOptim::michal, c(0, pi), phi= 30, theta = 100)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/michal_m10}
+\caption{2D Michalewicz function for \(p = 10\)}
+\end{subfigure}
+\caption{Michalewicz function}
+\end{figure}
+
+
+\clearpage
+\section{Numerical Experiments}\label{numerical-experiments}
+This section presents the numerical results from applying Gaussian Process (GP) to the prediction functions and Efficient Global Optimization (EGO) to the minimization functions. In order to determine the effectiveness of the different initial designs, both prediction and optimization functions were taken into consideration.
+
+We first generate different types of space-filling designs using various packages as described in Section \ref{sec:designs} and examine their performance and relationship under different criteria. For each type of design, we ran the corresponding algorithm to construct $80\times 8$ LHDs for 100 times. Table \ref{tab:comparison} shows the mean and median of the various design criteria for each design type.
+The design criteria are the maximin criterion \eqref{eqn:maximinLHD} with $p=15$, the MaxPro criteron \eqref{eqn:MaxPro}, the centered $L_2$-discrepancy \eqref{eqn:cd}, the UniPro criterion \eqref{eqn:UniPro}, and the absolute average correlation criterion \eqref{eqn:rho_ave}  defined below:
+\begin{equation}\label{eqn:rho_ave}
+\rho_{ave} =\frac{2}{m(m-1)}\sum_{k = 1}^m\sum_{l = k+1}^m\frac{\left|\sum_{i=1}^n\left(x_{ik}-\bar{x}_{\cdot k}\right)\left(x_{il}-\bar{x}_{\cdot l}\right)\right|}{\sqrt{\sum_{i=1}^n\left(x_{ik}-\bar{x}_{\cdot k}\right)^2 \sum_{i=1}^n\left(x_{il} -\bar{x}_{\cdot l}\right)^2}}.
+\end{equation}
+For all criteria, smaller values represent better designs.
+
+As expected, each type of design performs the best under the corresponding criterion used to generate the design. For example, maximin designs have smaller $\phi_p(D)$ values and MaxPro designs have smaller $\psi(D)$ values. In addition, random LHDs are worse than all other types of space-filling designs.
+Regarding to the $\rho_{ave}$ criterion, UPDs and uniform designs (ud) are considerably better than other types of designs.
+ Figure \ref{fig:comparison} gives a visualization where UPDs are fairly comparable to the uniform designs. These two types of designs have the highest correlation. From Table \ref{tab:comparison} and Figure \ref{fig:comparison}, we are capable to determine that uniform designs and UPDs are more robust than other types of designs under various design criteria.
+ We have examined cases with different design sizes, and the conclusions are similar.
+
+<<table, results=tex, include=false, fig=false>>=
+data_dir = "data"
+dat <- read_data("Res_80x8.txt", dir=data_dir)
+comparison(dat)
+@
+
+
+\begin{figure}%[h!tb]
+\begin{adjustwidth}{-2cm}{-2cm}
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$\psi(D)\sim\phi_p(D)$}
+<<include=false, label=pdfs/phi_p_psi>>=
+dat$design <- factor(dat$design)
+plot(dat$phip, dat$maxpro, xlab = latex2exp::TeX("$\\phi_p(D)$"),
+     ylab = latex2exp::TeX("$\\psi(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/phi_p_psi}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$100CD \sim \phi_p(D)$}
+<<include=false, label=pdfs/phi_p_cd>>=
+plot(dat$phip, dat$cd2, xlab = latex2exp::TeX("$\\phi_p(D)$"),
+     ylab = latex2exp::TeX("$100CD$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/phi_p_cd}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$100\phi(D)\sim \phi_p(D)$}
+<<include=false, label=pdfs/phi_p_eta>>=
+plot(dat$phip, dat$upd, xlab = latex2exp::TeX('$\\phi_p(D)$'),
+     ylab = latex2exp::TeX("$100\\phi(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/phi_p_eta}
+\end{subfigure}
+\vfill
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$\rho_{ave}(D)\sim \phi_p(D)$}
+<<include=false, label=pdfs/phi_p_rho_ave>>=
+plot(dat$phip, dat$cor1, xlab = latex2exp::TeX("$\\phi_p(D)$"),
+     ylab = latex2exp::TeX("$\\rho_{ave}(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/phi_p_rho_ave}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$100CD \sim \psi(D)$}
+<<include=false, label=pdfs/psi_cd>>=
+plot(dat$maxpro, xlab = latex2exp::TeX("$\\psi(D)$"),
+     ylab = latex2exp::TeX("$100CD$"), dat$cd2,col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/psi_cd}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$100\phi(D)\sim \psi(D)$}
+<<include=false, label=pdfs/psi_eta>>=
+plot(dat$maxpro, dat$upd, xlab = latex2exp::TeX("$\\psi(D)$"),
+     ylab = latex2exp::TeX("$100\\phi(D)$"),col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/psi_eta}
+\end{subfigure}
+\vfill
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$\rho_{ave}(D)\sim \psi(D)$}
+<<include=false, label=pdfs/psi_rho_ave>>=
+plot(dat$maxpro, dat$cor1, xlab = latex2exp::TeX("$\\psi(D)$"),
+     ylab = latex2exp::TeX("$\\rho_{ave}(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/psi_rho_ave}
+%\includegraphics[scale=0.5]{chapters/EGO/pdfs/psi_rho_ave}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$100\phi(D)\sim 100CD$}
+<<include=false,  label=pdfs/cd_eta>>=
+plot(dat$cd2, dat$upd, xlab = latex2exp::TeX("$100CD$"),
+     ylab = latex2exp::TeX("$100\\phi(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/cd_eta}
+%\includegraphics[scale=0.5]{chapters/EGO/pdfs/cd_eta}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$\rho_{ave}(D)\sim 100CD$}
+<< include=false, label=pdfs/cd_rho_ave>>=
+plot(dat$cd2, dat$cor1, xlab = latex2exp::TeX("$100CD$"),
+     ylab = latex2exp::TeX("$\\rho_{ave}(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/cd_rho_ave}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{$\rho_{ave}(D)\sim 100\phi(D)$}
+<<include=false, label=pdfs/eta_rho_ave>>=
+plot(dat$upd, dat$cor1, xlab = latex2exp::TeX("$100\\phi(D)$"),
+     ylab = latex2exp::TeX("$\\rho_{ave}(D)$"), col = dat$design)
+legend("bottomright",legend = levels(dat$design),fill = 1:5)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/eta_rho_ave}
+\end{subfigure}
+\caption{Comparison of 100 $80\times 8$ LHDs using various criteria}
+\label{fig:comparison}
+\end{adjustwidth}
+\end{figure}
+
+
+\clearpage
+\subsection{Prediction results}
+
+The test functions are evaluated on various space-filling LHDs of sizes $64\times 15$ and $128\times 31$. In addition, UPDs with 8 and 16 levels are also constructed and used for model fitting and prediction with the purpose of evaluating whether the number of levels affects the performace. All designs are scaled to the function domain accordingly.
+ Since the functions are of various dimensions, yet the designs used are of a pre-specified dimension, the unused dimensions are considered to be inert and serve as `noise'. This is quite common in practice whereby some inert factors are involved in an experimental study. For example, the borehole function has 8 variables, so we have 7 inert variables when the design has 15 columns. For each design type, an ordinary kriging model with a constant trend using the mat\'ern correlation function with $\nu = 5/2$ is then fitted. To evaluate the performance of different types of designs, the normalized root mean square error is used, which is given by
+$$
+\text {Normalized RMSE}=\left[\frac{N^{-1} \sum_{i=1}^N\left\{\hat{y}\left(\x_i\right)-y\left(\x_i\right)\right\}^2}{N^{-1} \sum_{i=1}^N\left\{\bar{y}-y\left(\x_i\right)\right\}^2}\right]^{1 / 2},
+$$
+where $\x_1, \ldots, \x_N$ are the inputs of the test dataset, $y(\x_i)$ is the true response, $\hat{y}(\x_i)$ is the predicted value from the GP model, and $\bar{y}$ is the mean of the responses in the training dataset. This criterion is related to $R^2$ in regression, but it measures performance for a new test dataset and smaller values are desirable \parencite{chen2016analysis}. We used a random LHD with $N=10,000$ runs as the test dataset.
+
+In order to reduce the randomness effect, the process is replicated 100 times. The replication  of the design generation is done via row and column permutations.  For each design type, except for the random LHD, 100 designs are generated and the best design among these 100 generated designs determined by each design type criterion is chosen as the candidate design. Using row and column permutation of the best design for each design type, 100  designs are thus generated. This method of design generation is chosen as it is almost infeasible to generate uniform designs of size $64 \times 15$ and $128\times 31$ for each replication. In particular to generate a $10\times 3$ uniform design with 10 levels using a machine equipped with a 13th Gen Intel Core\texttrademark{} i7-1360P 16-core CPU running at 2.2 GHz it takes an average of 5.8 seconds while a machine with Intel\textregistered{} Xeon\textregistered{} Platinum 8160 CPU with 48 cores running at 2.10 GHz takes an average of 5.77 seconds. In order to use the row and column permutation, a fairly large enough design is to be used. For example to generate a $80\times 8$ UD design with 80 levels requires $\approx 439$ minutes (7.32 hours) just for one design in the first machine, while needing 432 minute (7.2 hours) in the second machine. This shows as to why permutation is the best way to do the design generation.
+
+
+<<mean_median_64x15, results=tex, fig=false>>=
+cap <-"Means and medians of normalized RMSEs for $64\\times 15$ designs"
+d <- read_data("combined_prediction_64x15.txt", dir=data_dir)
+table_results(d, cap, "mean_median_64x15")
+@
+
+
+\begin{figure}%[h!tb]
+\begin{adjustwidth}{-2cm}{-2cm}
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Borehole}
+<<include=false, label=pdfs/Borehole_64x15>>=
+e <- pivot_longer(d, -fun, names_to = 'design', values_drop_na = TRUE)
+box_plot_rmse('Borehole', e) + theme_bw()
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Borehole_64x15}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Circuit}
+<<echo=false, include=false, fig=true, label=pdfs/Circuit_64x15>>=
+box_plot_rmse('Circuit', e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Circuit_64x15}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Currin}
+<<echo=false, include=false, fig=true, label=pdfs/Currin_64x15>>=
+box_plot_rmse('Currin', e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Currin_64x15}
+\end{subfigure}
+\vfill
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Gfunction}
+<<echo=false, include=false, fig=true, label=pdfs/Gfunction_64x15>>=
+box_plot_rmse('Gfunction', e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Gfunction_64x15}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{OakleyOhagan}
+<<echo=false, include=false, fig=true, label=pdfs/OakleyOhagan_64x15>>=
+box_plot_rmse('OakleyOhagan', e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/OakleyOhagan_64x15}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Piston}
+<<echo=false, include=false, fig=true, label=pdfs/Piston_64x15>>=
+box_plot_rmse('Piston', e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Piston_64x15}
+\end{subfigure}
+\vfill
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{4D Rosenbrock}
+<<echo=false, include=false, fig=true, label=pdfs/Rosenbrock4d_64x15>>=
+box_plot_rmse('Rosenbrock',e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Rosenbrock4d_64x15}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Wingweight}
+<<echo=false, include=false, fig=true, label=pdfs/Wingweight_64x15>>=
+box_plot_rmse('Wingweight', e)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Wingweight_64x15}
+\end{subfigure}
+\caption{Normalized RMSEs for various test functions and $64\times 15$ designs}
+\label{fig:boxplots_64x15}
+\end{adjustwidth}
+\end{figure}
+
+Figure \ref{fig:boxplots_64x15} shows the normalized RMSEs for the various test functions using various $64\times15$ designs. The mean and median RMSEs are also obtained and are reported in Table \ref{tab:mean_median_64x15}.
+A general conclusion is that the use of uniform designs and uniform projection designs in prediction is efficient as they result in minimal normalized RMSEs for most of the test functions, compared to the other types of designs. This could be attributed to their robustness in nature. On the other hand, the random LHD is often the worst as expected with one exception. For the 9-dimensional G-function, the maximin, MaxPro and uniform LHDs perform worse than the random LHD whereas all three of the UPDs perform better than the random LHD. In particular the 8-level UPD  (upd8q) performs the best in this case.
+
+Among all LHDs, the UPD appears to be most robust as it is never worse than the random LHD. Also it is better than the maxmin and  MaxPro designs with one exception for the Wingweight function, where the maximin design is better. In addition, the 16-level UPD (upd16q) performs better than the 8-level UPD except for the case of the G-function. At the same time 16-level UPD performs better than the 64-level UPD. This gives the notion of the importance of the number of levels. A fair enough number of levels in comparison to the number of runs is important in prediction. While in physical experiments, 3-5 levels are enough, in computer experiments, more levels are needed.
+
+The conclusions reached are further cemented by observing the results obtained when using $128\times 31$ design size for training and predicting on the test dataset with 10,000 runs. Here 8-level UPD is not used as it produces many outliers which would distort the visual comparison of the results. The 16-level UPD still has the best performance in most of the test functions; see Table \ref{tab:mean_median_128x31} and Figure \ref{fig:boxplots_128x31}.
+
+
+<<echo=false, results=tex, fig=false>>=
+cap <-"Means and medians of normalized RMSEs for $128\\times 31$ designs"
+d1 <- read_data("combined_prediction_128x31.txt", dir=data_dir)
+table_results(d1, cap, 'mean_median_128x31')
+@
+
+
+\begin{figure}%[h!tb]
+\begin{adjustwidth}{-2cm}{-2cm}
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Borehole}
+<<echo = false, fig=true, include=false, label=pdfs/Borehole_128x31>>=
+e1 <- pivot_longer(d1, -fun, names_to = 'design', values_drop_na = TRUE)
+box_plot_rmse('Borehole', e1) + theme_bw()
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Borehole_128x31}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Circuit}
+<<echo=false, include=false, fig=true, label=pdfs/Circuit_128x31>>=
+box_plot_rmse('Circuit', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Circuit_128x31}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Currin}
+<<echo=false, include=false, fig=true, label=pdfs/Currin_128x31>>=
+box_plot_rmse('Currin', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Currin_128x31}
+\end{subfigure}
+\vfill
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Gfunction}
+<<echo=false, include=false, fig=true, label=pdfs/Gfunction_128x31>>=
+box_plot_rmse('Gfunction', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Gfunction_128x31}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{OakleyOhagan}
+<<echo=false, include=false, fig=true, label=pdfs/OakleyOhagan_128x31>>=
+box_plot_rmse('OakleyOhagan', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/OakleyOhagan_128x31}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Piston}
+<<echo=false, include=false, fig=true, label=pdfs/Piston_128x31>>=
+box_plot_rmse('Piston', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Piston_128x31}
+\end{subfigure}
+\vfill
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{4D Rosenbrock}
+<<echo=false, include=false, fig=true, label=pdfs/Rosenbrock4d_128x31>>=
+box_plot_rmse('Rosenbrock', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Rosenbrock4d_128x31}
+\end{subfigure}
+\begin{subfigure}[b]{0.35\textwidth}
+\centering
+\caption{Wingweight}
+<<echo=false, include=false, fig=true, label=pdfs/Wingweight_128x31>>=
+box_plot_rmse('Wingweight', e1)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Wingweight_128x31}
+\end{subfigure}
+\caption{Normalized RMSEs for various test functions and $128 \times 31$ designs}
+\label{fig:boxplots_128x31}
+\end{adjustwidth}
+\end{figure}
+
+From Figure \ref{fig:boxplots_128x31} we see that the Currin and the wing weight functions  produce a few large RMSE values, likely due to the failure of the optimization routine when fitting the kriging model. These outliers distort the display of the boxplots even though the other RMSE values are generally concentrated below the RMSE value of the other functions. For a fair comparison, we got rid of these outliers and plotted the rest as shown in Figure \ref{fig:no_outlier}.
+
+\begin{figure}%[h!tb]
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.45\textwidth}
+\centering
+\caption{Currin}
+<<echo=false, include=false, fig=true, label=pdfs/Currin_128x31_no_outlier>>=
+box_plot_rmse('Currin', e1, TRUE)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Currin_128x31_no_outlier}
+\end{subfigure}
+\begin{subfigure}[b]{0.45\textwidth}
+\centering
+\caption{Wing Weight}
+<<echo=false, include=false, fig=true, label=pdfs/Wingweight_128x31_no_outlier>>=
+box_plot_rmse('Wingweight', e1, TRUE)
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/Wingweight_128x31_no_outlier}
+\end{subfigure}
+\caption{Normalized RMSEs for Currin and Wing Weight functions without the outliers}
+\label{fig:no_outlier}
+\end{figure}
+
+
+\clearpage
+\subsection{Minimization results}
+
+We consider four types of space-filling designs for sequential minimization: random LHDs, maximin LHDs, MaxPro LHDs and UniPro LHDs. The test functions are evaluated at $n_0 = 10\times m$ initial points, apart from the Branin function which is evaluated at $n_0 = 10$ initial points. These functions are then minimized using the EGO approach. We use the function fastEGO.nsteps in the R DiceOptim package to sequentially add a point at a time with $n_1$ steps. For each step, the cumulative minimum is recorded. This process is replicated 200 times.
+
+<<echo = FALSE, fig= true, label=pdfs/branin_lineplot1, include=false>>=
+lineplot('branin_10x2_ymin.txt', nstep_max = 20, dir=data_dir)
+@
+
+<<echo=false, include=false, fig=true, label=pdfs/camel6_lineplot1>>=
+lineplot("camel6_20x2_ymin.txt", dir=data_dir, nstep_max = 20)
+@
+
+<<echo=false, include=false, fig=true, label=pdfs/goldpr_lineplot1>>=
+lineplot("goldpr_20x2_ymin.txt", dir=data_dir, nstep_max = 20)
+@
+
+
+
+\begin{figure}%[h]
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{Branin}
+<<echo = FALSE, fig= true, label=pdfs/branin_lineplot, include=false>>=
+lineplot('branin_10x2_ymin.txt', nstep_max = 20, dir=data_dir) +
+  theme(legend.position = "none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/branin_lineplot}
+\end{subfigure}
+%
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{Camel Six}
+<<echo=false, include=false, fig=true, label=pdfs/camel6_lineplot>>=
+lineplot("camel6_20x2_ymin.txt", dir=data_dir, nstep_max = 20) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/camel6_lineplot}
+\end{subfigure}
+%\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{Goldstein-Price}
+<<echo=false, include=false, fig=true, label=pdfs/goldpr_lineplot>>=
+lineplot("goldpr_20x2_ymin.txt", dir=data_dir, nstep_max = 20) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/goldpr_lineplot}
+\end{subfigure}
+\caption*{\includegraphics [scale=0.3,trim={2cm 7.3cm 0 7cm},clip]{chapters/EGO/pdfs/legend}}
+\caption{Minimization path for 2 dimensional test functions}
+\label{fig:2dimension}
+\end{figure}
+
+Figure \ref{fig:2dimension} shows the average minimal values at each step, together with the 2 standard error bar, of the resulting minimization path with $n_1=20$ added points for three 2-dimensional test functions.
+For the Branin function,  MaxPro and UniPro designs yield smaller y-values at early stages than maximin and random LHDs. The difference gradually diminishes over the sequential optimization process. After 15 additional points, all the methods have the same y-value indicating that the function minimum has been achieved. The result is similar for the Camel Six function. For the Goldstein-Price function,  the UniPro design maintains its advantage over others after 20 steps.
+
+
+
+
+% 6D
+<<echo=false, include=false, fig=true, label=pdfs/levy6_lineplot1>>=
+lineplot("levy_60x6_ymin.txt",dir=data_dir, nstep_max = 30)
+@
+
+<<echo=false, include=false, fig=true, label=pdfs/ackley6_lineplot1>>=
+lineplot("ackley_60x6_ymin.txt", dir=data_dir, nstep_max = 30)
+@
+
+<<echo=false, fig=true, include=false, label=pdfs/michal6_lineplot1>>=
+lineplot('michal_60x6_ymin.txt', dir=data_dir, nstep_max = 30)
+@
+
+% 8D
+
+<<echo=false, include=false, fig=true, label=pdfs/ackley8_lineplot1>>=
+lineplot("ackley_80x8_ymin.txt", dir=data_dir, nstep_max = 30)
+@
+<<echo=false, include=false, fig=true, label=pdfs/levy8_lineplot1>>=
+lineplot("levy_80x8_ymin.txt", dir=data_dir, nstep_max = 30)
+@
+<<echo=false, fig=true, include=false, label=pdfs/michal8_lineplot1>>=
+lineplot('michal_80x8_ymin.txt', dir=data_dir, nstep_max = 30)
+@
+
+
+
+
+
+
+
+
+
+
+\begin{figure}%[h!]
+\captionsetup[subfigure]{labelformat=empty}
+\centering
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{4D Ackley}
+<<echo = false, fig=true, include=false, label=pdfs/ackley4_lineplot>>=
+lineplot("ackley_40x4_ymin.txt", dir=data_dir,nstep_max = 20) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/ackley4_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{4D Levy}
+<<echo=false, include=false, fig=true, label=pdfs/levy4_lineplot>>=
+lineplot("levy_40x4_ymin.txt", dir=data_dir, nstep_max = 20) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/levy4_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{4D Michalewicz}
+<<echo=false, fig=true, include=false, label=pdfs/michal_lineplot>>=
+lineplot('michal_40x4_ymin.txt', dir=data_dir, nstep_max = 20) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/michal_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{6D Ackley}
+<<echo=false, include=false, fig=true, label=pdfs/ackley6_lineplot>>=
+lineplot("ackley_60x6_ymin.txt", dir=data_dir, nstep_max = 30) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/ackley6_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{6D Levy}
+<<echo=false, include=false, fig=true, label=pdfs/levy6_lineplot>>=
+lineplot("levy_60x6_ymin.txt",dir=data_dir, nstep_max = 30) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/levy6_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{6D Michalewicz}
+<<echo=false, fig=true, include=false, label=pdfs/michal6_lineplot>>=
+lineplot('michal_60x6_ymin.txt', dir=data_dir, nstep_max = 30) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/michal6_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{8D Ackley}
+<<echo=false, include=false, fig=true, label=pdfs/ackley8_lineplot>>=
+lineplot("ackley_80x8_ymin.txt", dir=data_dir, nstep_max = 30) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/ackley8_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{8D Levy}
+<<echo=false, include=false, fig=true, label=pdfs/levy8_lineplot>>=
+lineplot("levy_80x8_ymin.txt", dir=data_dir, nstep_max = 30) +
+ theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/levy8_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+\caption{8D Michalewicz}
+<<echo=false, fig=true, include=false, label=pdfs/michal8_lineplot>>=
+lineplot('michal_80x8_ymin.txt', dir=data_dir, nstep_max = 30) +
+  theme(legend.position="none")
+@
+\includegraphics[width=\textwidth]{chapters/EGO/pdfs/michal8_lineplot}
+\end{subfigure}
+\begin{subfigure}[b]{0.3\textwidth}
+\centering
+%\caption{8D rosenbrock}
+<<echo=false, include=false, fig=true, label=pdfs/rosen8_lineplot>>=
+lineplot("rosenbrock_80x8_ymin.txt", dir=data_dir, nstep_max = 30) +
+  theme(legend.position = 'top') +
+  guides(color = guide_legend("")) -> a
+a + guides(color = "none")
+@
+\end{subfigure}
+<<echo=false, include=false, fig=true, label=pdfs/legend>>=
+l <- cowplot::get_plot_component(a + theme_bw() + theme(legend.position = 'top'), "guide-box-top")
+grid::grid.draw(l)
+@
+\caption*{\includegraphics [scale=0.3,trim={2cm 7.3cm 0 7cm},clip]{chapters/EGO/pdfs/legend}}
+\caption{Minimization path for test functions with varying dimensions}
+\label{fig:lineplots}
+%\end{adjustwidth}
+\end{figure}
+
+
+The results presented above are not unique. They are determined by the computation of the first y-value from the initial design. The design that initially produces the least function value tends to generally converge faster to the function minimum, as the sequential points majorly depend on the expected improvement with influence from the design type.
+As the number of iterations (nsteps) increases, the influence of the initial design type on the optimization process diminishes. Initially, the choice of design strategy can play a significant role in guiding the search for the global optimum. However, as more sample points are iteratively added based on the acquisition function, the optimization process becomes increasingly driven by the updated GP model. This model incorporates all collected data points, thereby reducing the relative impact of the initial design. Consequently, the optimization converges towards the global optimum, and differences attributed to the initial design strategy become less pronounced.
+
+Though this is the case, in high dimensional setup, or using complicated functions, the number of sequentially added points needed for convergence might be quite large. With a limited budget, the effect of initial design could be profound.
+
+Figure \ref{fig:lineplots} shows the minimization path for 3 other test functions with varying dimensions from 4 to 8.
+One striking observation is the decreasing efficiency of using maximin designs when the dimension increases. At lower dimensions,  maximin designs fairly compete with the other designs but as the dimensions increase to 6 and 8, it is observed that the maximin designs do poorly. This is even after increasing the number of steps to 30 or more. We also note that  MaxPro designs are  worse than  random LHDs and UniPro designs for the Ackley and Levy function. Overall, UniPro designs are robust and perform well under all situations, especially in high dimensions and complicated test functions.
+
+\section{Concluding Remarks}
+In conclusion, the numerical evaluation of Gaussian Process (GP) and Efficient Global Optimization (EGO) techniques reveal that the uniform design (UD) and uniform projection  design (UPD)  stand out for their robustness and efficiency. When compared across various design criteria, the UD and UPD consistently demonstrate superior performance. The extensive experimentation, including the generation of 100 designs and their permutations, highlight the efficiency of the uniform designs in reducing normalized root mean square error in prediction tasks.
+Notably, the UPD with 16 levels proved to be particularly effective, underscoring the importance of having a sufficiently large number of levels in design, yet it is not necessary to use LHDs with the number of levels being equal to the number of runs when the latter is large.
+
+The comparative analysis of different initial designs for EGO further confirmed the efficacy of UPDs. As evidenced by the results, UPDs converged more quickly to the function minimum compared to other design methods. Although the differences in optimization outcomes among design strategies became less pronounced with more iterations, the initial design choice had a significant impact at early stages, which could prolong to later stages when we encounter complicated optimization tasks in high dimensions. This observation underscores the value of selecting {a good} design strategy for enhancing the efficiency of the optimization process. In conclusion, UPDs are simple to construct, offering a  feasible solution for large-scale, high-dimensional prediction and optimization tasks.
+
+
+However, the results also revealed some limitations, particularly with distance-based designs like the maximin criterion in high-dimensional spaces. One reason as to why this is the case is because of the use of Euclidean distance as the criterion to be optimized by the maximin design yet it is well documented that Euclidean distance is not a good metric in high dimensions. In high dimensions, the natural intuition which comes from our three-dimensional world fails and thus do not apply \parencite{domingos2012few}. Taking an example of Gaussian distribution, in high dimensions, most of the mass of a multivariate Gaussian distribution is not near the mean, but in an increasingly distant ``shell" around it; and most of the volume of a high dimensional orange is in the skin, not the pulp. If a constant number of points is distributed uniformly in a high-dimensional hypercube, beyond some dimensionality most points are closer to a face of the hypercube than to their nearest neighbor. When a hypersphere is approximated by inscribing it in a hypercube, in high dimensions almost all the volume of the hypercube is outside the hypersphere \parencite{domingos2012few}. At the same time, in high dimensions, the ratio between the nearest and farthest points using Euclidean distance metric approaches 1, i.e., the points essentially become uniformly distant from each other \parencite{aggarwal2001surprising}. Thus, as all points are essentially uniformly distant from each other, the distinction is meaningless. This indicates as to why the Euclidean distance would therefore not be a good measure of distance in high dimensions. Since the spreading of points using the maximin design is done using the Euclidean distance, these points will mostly cover the empty space rather than the surface where the function is defined, hence making it be inefficient as compared to the other methods.
+Perhaps this phenomenon also impacts the MaxPro designs, making the efficiency of the MaxPro design to decline as the dimensions increases as seen in Figure \ref{fig:lineplots}. Though this is not known.
+
+As the UPD focusing on 2-dimensional uniformity, it is not highly impacted by the curse of dimensionality. Thereby retaining its high performance in comparison to the distance based designs with regards to minimizing high dimensional functions.
+The inefficacy of the maximin design in higher dimensions, due to the limitations of Euclidean distance metrics, suggests that such distance-based methods may not be well-suited for complex high-dimensional problems. Conversely, the UPD's use of the centered $L_2$-discrepancy criterion allows it to mitigate the curse of dimensionality, maintaining its effectiveness across various dimensions. This highlights the need for careful consideration of design criteria and metrics in high-dimensional optimization tasks to ensure accurate and efficient results.
+
+%\printbibliography
+
+
+
+<<fig=false,echo=false>>=
+setwd(dr)
+@
+
+%\end{document}

@@ -13,6 +13,7 @@ TARGET = $(chapter2)_processed$(EXT) \
          $(chapter3)_processed$(EXT) \
          $(chapter4)_processed$(EXT)
 
+
 pat1 = "s/^(?=.*(?=\n.title))|^(?=(?(?!\\\\title).)*(?=\n.section\\{Introduction\\}))|^(?=.end\\{document\\})|^(?=.printbibliography)/%/gms"
 pat2 = "s/^(\\\\)title[{]\\s*(\\\\bf)?\\s*/\1chapter{/s"
 pat3 = "s/(>>=)/\1\n dr <- getwd()\n setwd('"
@@ -21,6 +22,7 @@ pat5 = "s/(includegraphics.*\\{)(pdfs\/)/"
 pat6 = "s/^.section[*]?{Appendix: */\\\\appendix{/s"
 
 
+	
 all: $(output).pdf
 	open $<
 
