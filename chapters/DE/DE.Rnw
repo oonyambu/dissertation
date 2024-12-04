@@ -59,17 +59,25 @@ Differential Evolution (DE) is a powerful optimization algorithm inspired by the
 if(!dir.exists('pdfs'))dir.create('pdfs')
 @
 
-Differential Evolution (DE) is a nature-inspired optimization algorithm that mimics the process of natural selection to efficiently search for optimal solutions within large search spaces. Since its introduction in 1997, DE has gained widespread popularity and has been extensively utilized to solve complex optimization problems. Its versatility and straightforward implementation have facilitated its integration into a multitude of real-world applications, ranging from parameter tuning in machine learning algorithms to engineering design optimization and financial portfolio management. DE has consistently demonstrated its efficacy across diverse problem domains, making it a preferred choice among researchers and practitioners alike due to its adaptability to various problem structures.
 
-A particularly compelling application of the DE algorithm is in the realm of design generation. Recently, \textcite{stokes2023metaheuristic} proposed a DE-based approach for constructing order-of-addition designs, showcasing its efficiency compared to other metaheuristic algorithms, such as Simulated Annealing, Threshold Accepting, Genetic Algorithms, and Particle Swarm Optimization. Inspired by their findings, we adapt and extend their DE algorithm for the construction of Uniform Projection Designs (UPDs). UPDs, introduced by \textcite{sun2019uniform}, are specialized space-filling designs characterized by robust performance across various design criteria and impressive space-filling properties in multiple dimensions. However, existing algorithms for generating UPDs remain underexplored, highlighting an important area for further research.
+Experimental design construction is a fundamental aspect of research and data-driven inquiry, aimed at organizing experimental runs to extract maximum information while minimizing resource use. By strategically selecting input combinations, well-constructed designs ensure that researchers can identify key factors, estimate model parameters, and predict responses accurately \parencite{montgomery2017design}. The primary goal is to balance efficiency and comprehensiveness, whether in exploring high-dimensional spaces, optimizing processes, or assessing system robustness. Central to this process is the notion of space-filling, where design points are distributed to capture variations across the entire experimental domain, providing a solid foundation for modeling and inference \parencite{santner2003design}.
+
+Different design strategies address diverse experimental objectives and constraints. For instance, factorial and fractional factorial designs are widely used to study the main effects and interactions of factors systematically, while response surface designs, such as central composite and Box-Behnken designs, support optimization and curvature estimation \parencite{myers2016response}. In other cases, non-traditional approaches like space-filling designs (e.g., Latin hypercube or maximin designs) and discrepancy-based designs (e.g., maxpro or uniform designs) are preferred for high-dimensional and computational experiments \parencite{joseph2016space}. Each method offers unique strengths, and the choice depends on the experimental goals, computational resources, and the nature of the underlying system being studied. Through thoughtful design construction, researchers can ensure that their experiments are not only scientifically rigorous but also cost-effective and impactful.
+
+ In the quest for robust experimental designs, Uniform Projection Designs (UPDs) have emerged as a powerful tool for ensuring uniformity across all low-dimensional projections of the design space \parencite{sun2019uniform}. UPDs, introduced by \textcite{sun2019uniform}, are specialized space-filling designs characterized by robust performance across various design criteria and impressive space-filling properties in multiple dimensions. These designs are particularly valuable in high-dimensional settings where relationships between subsets of factors often carry critical information. However, existing algorithms for generating UPDs remain underexplored, highlighting an important area for further research. To construct UPDs, we leverage the use of Differential Evolution (DE)%, an evolutionary population-based optimization algorithm, which offers a flexible and efficient approach. DE iteratively refines candidate solutions by simulating evolutionary processes like mutation, crossover, and selection (Storn & Price, 1997). By leveraging the ability of DE to handle complex, multimodal objective functions, researchers can optimize projection-based uniformity criteria, such as minimizing the discrepancy in all subspaces. This approach provides a systematic way to generate designs that balance space-filling properties across dimensions, enabling more reliable analysis and prediction in multifactor experiments.
+
+ 
+%Differential Evolution (DE) is a nature-inspired optimization algorithm that mimics the process of natural selection to efficiently search for optimal solutions within large search spaces. Since its introduction in 1997, DE has gained widespread popularity and has been extensively utilized to solve complex optimization problems. Its versatility and straightforward implementation have facilitated its integration into a multitude of real-world applications, ranging from parameter tuning in machine learning algorithms to engineering design optimization and financial portfolio management. DE has consistently demonstrated its efficacy across diverse problem domains, making it a preferred choice among researchers and practitioners alike due to its adaptability to various problem structures.
+
+%A particularly compelling application of the DE algorithm is in the realm of design generation.
+Recently, \textcite{stokes2023metaheuristic} proposed a DE-based approach for constructing order-of-addition designs, showcasing its efficiency compared to other metaheuristic algorithms, such as Simulated Annealing, Threshold Accepting, Genetic Algorithms, and Particle Swarm Optimization. Inspired by their findings, we adapt and extend their modified DE algorithm for the construction of UPDs. 
 
 The performance of the DE algorithm is significantly influenced by its hyperparameters, which dictate the learning process of the optimization \parencite{price2006differential}. An inappropriate setting of these hyperparameters can lead to suboptimal performance of the DE algorithm. While the DE algorithm proposed by \textcite{stokes2023metaheuristic} encompasses several hyperparameters, their effects remain largely unexamined. Therefore, we aim to conduct a comprehensive study of the hyperparameters to elucidate their impacts on the algorithm's performance, providing insights that could enhance its effectiveness.
 
 The challenge of determining the optimal hyperparameter settings for any learning process has been widely studied. Two primary frameworks dominate this landscape: the model-based framework and the model-free framework. Model-based hyperparameter optimization focuses on tuning hyperparameters by approximating the true learning algorithm, while model-free methods approach the optimization problem without parametric assumptions. Relevant literature on model-based hyperparameter optimization includes works by \textcite{falkner2018bohb, hutter2011sequential, li2018hyperband, lujan2018design, mockus1978application, snoek2012practical, wu2020efficient, zoph2016neural}. In contrast, model-free frameworks encompass techniques such as manual search, grid search, random search, genetic algorithms, and orthogonal array tuning methods \parencite{liashchynskyi2019grid}.
 
-Our approach leverages various types of designs and models to investigate the effectiveness of DE in constructing UPDs. Specifically, we aim to address three  objectives: (i) identifying useful design types, (ii) determining the most effective models, and (iii) developing an efficient algorithm for the construction of UPDs. We employ {different types of models} to evaluate the performance of different designs, enabling us to visualize the response surface of the DE algorithm's hyperparameters. This framework outlines the data generation, modeling, and analysis procedures. The insights gained from our analysis will provide a general guideline for optimal hyperparameter settings necessary for generating superior uniform projection designs.
-
-The primary goal of this paper is to tune the DE algorithm for constructing UPDs through a detailed analysis of the response surface of the DE hyperparameters. This analysis involves studying how variations in hyperparameters influence the efficiency and optimality of the generated designs. By utilizing various designs to establish hyperparameter settings for DE optimization, we can identify critical factors or combinations of factors that contribute to enhanced performance. Our objective is to thoroughly explore the hyperparameter space of the DE algorithm using established designs to optimize the generation of UPDs. This approach is quite different from the \textcite{lujan2018design} method which used a $2^k$ factorial design with the response surface method (RSM) and ridge regression for screening to select the important factors in the data. While \textcite{lujan2018design} focuses on factor screening and selection with the traditional RSM approach, we emphasize on the comparisons of different types of designs and surrogate models in approximating the surface structure of the DE algorithm.
+Our approach leverages various types of designs and models to investigate the effectiveness of DE in constructing UPDs. Specifically, we aim to address three  objectives: (i) identifying useful design types in understanding the surface structure extended by the DE hyperparameters, (ii) determining the most effective models, and (iii) developing an efficient algorithm for the construction of UPDs. We employ different types of models to evaluate the performance of different designs, enabling us to visualize the response surface of the DE algorithm's hyperparameters. This framework outlines the data generation, modeling, and analysis procedures. The insights gained from our analysis provide a general guideline for optimal hyperparameter settings necessary for generating superior uniform projection designs.%The primary goal of this paper is to tune the DE algorithm for constructing UPDs through a detailed analysis of the response surface of the DE hyperparameters. This analysis involves studying how variations in hyperparameters influence the efficiency and optimality of the generated designs. By utilizing various designs to establish hyperparameter settings for DE optimization, we can identify critical factors or combinations of factors that contribute to enhanced performance. Our objective is to thoroughly explore the hyperparameter space of the DE algorithm using established designs to optimize the generation of UPDs. 
+This approach is quite different from the \textcite{lujan2018design} method which used a $2^k$ factorial design with the response surface method (RSM) and ridge regression for screening to select the important factors in the data. While \textcite{lujan2018design} focuses on factor screening and selection with the traditional RSM approach, we emphasize on the comparisons of different types of designs and surrogate models in approximating the surface structure of the DE algorithm.
 
 % \reva{(The rest can be deleted or saved for the introduction chapter)}
 % In the realms of engineering, architecture, product development, and chemical mixtures, the processes of design generation and optimization are fundamental to creating innovative and efficient solutions. The designs used for the physical and computer experiments aught  to be efficient in minimizing resource use \parencite{montgomery2017design}, enhance data quality \parencite{box2005statistics}, maximize information gain \parencite{myers2016response}, optimize performance \parencite{goos2011optimal}, enhance safety, and foster innovation.
@@ -90,81 +98,53 @@ Without loss of generality, we assume that we want to minimize a real-valued obj
 
 \begin{enumerate}
     \item \textbf{Genetic Representation}:
-    Let {$\pi_1, \ldots ,\pi_N$ } be the initial population, where each agent
-    $\pi_i = (\pi_{i1},\dots,\pi_{im})$ is randomly chosen from $\Omega$.
-
+    Let $\pi_1, \ldots ,\pi_N$ be the initial population, where each agent $\pi_i = (\pi_{i1},\dots,\pi_{im})$ is randomly chosen from $\Omega$.
     \item \textbf{Mutation}:
     Mutation expands the search space of the current population.
-    For each $i = 1, \ldots , N$, mutation produces a potential donor $\nu_i$
-    in $\Omega$ by adding the weighted difference of two agents to a third,
-    all randomly chosen and distinct from the target $(\pi_i)$, that is,
+    For each $i = 1, \ldots , N$, mutation produces a potential donor $\nu_i$ in $\Omega$ by adding the weighted difference of two agents to a third,  all randomly chosen and distinct from the target $(\pi_i)$, that is,
     \begin{equation}
         \nu_i = \pi_a + w(\pi_b - \pi_c)\\
         \label{mutation}
     \end{equation}
-    where $a \neq b \neq c$ are randomly chosen three distinct numbers from
-    $1,\dots, N$, and they are all different from $i$.
-
+    where $a \neq b \neq c$ are randomly chosen three distinct numbers from $1,\dots, N$, and they are all different from $i$.
     \item \textbf{Crossover}:
-    Crossover blends the current generation of agents with the population of
-    potential donors in order to form candidates for the next generation known
-    as trial agents. For each $i = 1,\dots, N$, one of the $m$ variables of
-    $\nu_i$ is randomly selected to directly enter the trial agent $u_i$.
-    In this way, one variable is forced to change so that each $u_i$ will
-    certainly differ from its original target $\pi_i$. Next, with probability pCR, more variables are taken from $\nu_i$ and placed in the trial
-    agent. Whichever variables do not take their value from the donor inherit
-    their original value from $\pi_i$. Assuming $j_0$ is a random number from
-    $1, \dots , m$, this process can be written as follows: for
-    $j = 1, . . . , m,$
-
+    Crossover blends the current generation of agents with the population of potential donors in order to form candidates for the next generation known as trial agents. For each $i = 1,\dots, N$, one of the $m$ variables of $\nu_i$ is randomly selected to directly enter the trial agent $u_i$. In this way, one variable is forced to change so that each $u_i$ will
+    certainly differ from its original target $\pi_i$. Next, with probability pCR, more variables are taken from $u_i$ and placed in the trial agent. Whichever variables do not take their value from the donor inherit their original value from $\pi_i$. Assuming $j_0$ is a random number from $1, \dots, m$, this process can be written as follows: for $j = 1,\dots, m,$
     $$
     \begin{aligned}
     u_{ij} = \begin{cases} \nu_{ij}& \text{with probability pCR}
-    \text{ or if } j= j_0,\\ \pi_{ij}& \text{otherwise}    \end{cases}
+    \text{ or if } j= j_0,\\ \pi_{ij}& \text{otherwise}\end{cases}
     \end{aligned}
     $$
-
     \item \textbf{Selection}:
-    Selection creates the next generation of agents by comparing each target
-    to its respective trial agent. The trial agent is adopted if it leads
-    to an improvement and is discarded otherwise. For minimization problems,
-    this process is given by,
+    Selection creates the next generation of agents by comparing each target to its respective trial agent. The trial agent is adopted if it leads to an improvement and is discarded otherwise. For minimization problems, this process is given by,
     $$
-    \pi_i =  \begin{cases} u_i & \text{if } \phi(u_i) < \phi(\pi_i)\\
-        \pi_i &\text{otherwise}  \end{cases}
+    \pi_i = \begin{cases} u_i & \text{if } \phi(u_i) < \phi(\pi_i)\\
+    \pi_i &\text{otherwise}  \end{cases}
     $$
     \item \textbf{Repeat}:
     Repeat steps 2 through 4 over many generations until a specified
     stopping condition is satisfied.
 \end{enumerate}
 
-Though quite simplistic, in order to use the algorithm for design generation, a modification is needed. This is because the designs lie on a discrete and constrained space. We must therefore ensure that the resulting mutated design is feasible. Thus a viable mutation function which ensures that the generated design is in the feasible region is needed. For example, suppose we have $n\times m$ Latin hypercube design (LHD), we need a mutation function such that once we mutate, we still end up with an $n \times m$ LHD. This calls for a modification of the mutation step. We use the modification as presented by \textcite{stokes2023metaheuristic}. They proposed a perturbation modification.
+Though quite simplistic, its ability to balance exploration and exploitation makes it ideal for solving non-linear and multimodal problems. 
 
-Interpreting the second part of equation \eqref{mutation}, $w(\pi_b - \pi_c)$, as adding some perturbations to $\pi_a$, \textcite{stokes2023metaheuristic} rephrased the mutation operation as follows:
-\begin{equation}\label{eq:perturbation}
-\nu_i = \operatorname{Perturb}(\pi_a),
-\end{equation}
-whereby the perturbation is done by randomly swapping some elements in $\pi_{aj}$ independently for each $j = 1,\dots, m$.
-Letting pMut to be a small constant from [0, 1], they defined the perturbation operation as:
-\[
-\operatorname{Perturb}(\pi_a): \text{randomly swap 2 elements in }\pi_{aj} \text{ with probability  pMut  for } j = 1,\dots, m.
-\]
-
-With different choices of $a$ they ended up with different variants for DE. In all the variants the choices of the global best, current agent and a random agent are fixed at a particular probability.
-
-The modified version of the DE algorithm that \textcite{stokes2023metaheuristic} proposed contained six hyperparameters of interest:
+Since experimental designs lie on a discrete and constrained space, we leverage the modified DE by \textcite{stokes2023metaheuristic}. This is to ensure that the resulting mutated design is feasible. The proposed method modifies the mutation step by using the swap mutation  \parencite{michalewicz2013genetic}, one of the structural mutation operators in genetic algorithm.  In this operator, two positions in a solution are randomly selected, and their values are exchanged. This maintains the feasibility of the solution by preserving its permutation structure while introducing variation to explore the search space. The swap mutation is computationally efficient and effective at diversifying the population, reducing the risk of premature convergence. The mutation step is controlled by mutation rate $pMut$ which is the probability of swapping two elements. In addition borrowing from PSO, they induced the influence of the global best solution with a probability $pGBest$. This yielded an algorithm which contained the following hyperparameters:
 \begin{itemize}
     \item NP - The size of the population (N). % We consider values between $[10,  100]$
-    \item itermax -  the maximum number of iterations used. % We consider values between $[500, 1500]$
+    \item itermax -  the maximum number of iterations/generations used. % We consider values between $[500, 1500]$
     \item pCR - Probability of crossover. %We consider values between $[0.05, 0.95]$
     \item pMut - Probability of mutation. %We consider values between $[0.05, 0.95]$
     \item pGBest - Probability of using the global best for mutation.
   %  We consider values between $[0.05, 0.95]$
-      \item pSelf - Probability of using the current agent for mutation.
+    \item pSelf - Probability of using the current agent for mutation.
 \end{itemize}
 
-{The first two hyperparameters, NP and itermax, determine the computational complexity, whereas the other four hyperparameters affect the evolution process. The two hyperparameters, pGBest and pSelf, determine the probability of using the global best and the current agent in the mutation  \eqref{eq:perturbation}, respectively. There is a constraint between these two hyperparameters, that is, pGBest + pSelf $\le 1$.}   The question that arises is how these hyperparameters interact with each other. Also whether we can do better than the proposed fixed probabilities to obtain the better settings for the DE algorithm for design generation.
-In this study, we consider values between $[10,  100]$ for $N$, $[500, 1500]$ for itermax, and $[0.05, 0.95]$ for pCR, pMut and pGBest. We fix pSelf = (1 - pGBest)/2 so that there is an equal chance for selecting a current agent and a random agent if the global best is not used.
+They proposed three different choices of the initial agent to be mutated to obtain the proposal agent. This lead to three different variants which they referred to as DE1 which uses the global best, DE2 which uses the current agent nad DE3 which uses a random agent.  
+
+Regarding the hypermarameters, the first two, NP and itermax, determine the budget size, whereas the other four hyperparameters affect the evolution process. The hyperparameters, pGBest and pSelf, determine the probability of using the global best and the current agent in the mutation process, respectively. There is a constraint between these two hyperparameters, that is, pGBest + pSelf $\le 1$. The question that arises is how these hyperparameters interact with each other. Also whether we can do better than the proposed fixed probabilities to obtain the better settings for the DE algorithm for design generation.
+
+In this study, we shall consider values between $[10,  100]$ for $NP$, $[500, 1500]$ for itermax, and $[0.05, 0.95]$ for pCR, pMut and pGBest. We fix $pSelf = (1 - pGBest)/2$ so that there is an equal chance for selecting a current agent and a random agent if the global best is not used.
 
 \section{Designs for Hyperparameter Settings}\label{sec:DE.designs}
 Various designs can be used to set the DE hyperparameters before the optimization process. As the functions optimized by DE are often complex with many local minima, one has to carefully choose the initial point for the optimization process. These initial points are determined using any of the methods discussed below. In each subsection below one method is described, and its benefits and drawbacks are discussed.
@@ -222,9 +202,7 @@ To mitigate the need for larger samples, fractional factorial designs were intro
 \end{figure}
 
 \subsection*{Central composite designs (CCDs)}
-Introduced by \textcite{box1951series} as an extension of factorial designs, they were developed as a way to efficiently fit quadratic response surfaces and identify optimal process settings in industrial experiments. CCDs are full or fractional factorial designs that are augmented with two additional sets of sampling points described as ``center'' and ``axial or star'' points \parencite{box1951series}. The center point is defined by all factors being set at their center level. The CCD
-uses $2m$ axial points, each of which is defined by all but one factor being at their center level and the level of the remaining factor is denoted
-by $\alpha$, which is generally chosen to be between 1 and $\sqrt{m}$ \parencite{montgomery2017design}. The basic concepts of the CCD for $m = 2$ and $m = 3$ are depicted in Figure \ref{fig:ccd}, where the bold dots are the design points.
+Introduced by \textcite{box1951series} as an extension of factorial designs, they were developed as a way to efficiently fit quadratic response surfaces and identify optimal process settings in industrial experiments. CCDs are full or fractional factorial designs that are augmented with two additional sets of sampling points described as ``center'' and ``axial or star'' points \parencite{box1951series}. The center point is defined by all factors being set at their center level. The CCD uses $2m$ axial points, each of which is defined by all but one factor being at their center level and the level of the remaining factor is denoted by $\alpha$, which is generally chosen to be between 1 and $\sqrt{m}$ \parencite{montgomery2017design}. The basic concepts of the CCD for $m = 2$ and $m = 3$ are depicted in Figure \ref{fig:ccd}, where the bold dots are the design points.
 
 \begin{figure}%[!ht]
   \centering
@@ -325,7 +303,7 @@ by $\alpha$, which is generally chosen to be between 1 and $\sqrt{m}$ \parencite
 Introduced by \textcite{xu2014combining}, an OACD is a class of composite designs based on a two-level factorial design and a three-level {orthogonal array (OA)}. An $\mathrm{OA}$ of $n$ runs, $m$ columns, $s$ levels, and strength $t$, denoted by $\mathrm{OA}\left(n, s^m, t\right)$, is an $n \times m$ matrix in which all $s^t$ level-combinations appear equally often in every $n \times t$ submatrix \parencite{wu2011experiments}. For example, a $2^m$ factorial design can be viewed as $\operatorname{OA}\left(n, 2^m, t\right)$ with $n=2^m$ and $t=m$. Similarly, a three-level OA can be written as $\operatorname{OA}\left(n, 3^m, t\right)$. Thus, an OACD is a composite design which consists of a two-level factorial design as its factorial points, a three-level OA as its additional points, plus any number of center points \parencite{luna2022orthogonal}.
 
 \subsection*{Space filling designs}
-While the previously discussed designs  utilize sampling points that are at the boundaries of the design space, space filling designs generate samples that are dispersed throughout the multidimensional design space and not just at the boundary of the design space. These designs are important in sampling a surface as they could capture important regions thereby minimizing the bias between the true structure of the surface and the estimated surface from the sampled points \parencite{gardner2006small, giunta2003overview}. They are of various types depending on the approach used to construct them, e.g., sampling-based  Latin Hypercube designs, distance-based  maximin designs, and distribution based uniform designs \parencite{burton2022design}.
+While the previously discussed designs utilize sampling points that are at the boundaries of the design space, space filling designs generate samples that are dispersed throughout the multidimensional design space and not just at the boundary of the design space. These designs are important in sampling a surface as they could capture important regions thereby minimizing the bias between the true structure of the surface and the estimated surface from the sampled points \parencite{gardner2006small, giunta2003overview}. They are of various types depending on the approach used to construct them, e.g., sampling-based -- Latin Hypercube designs, distance-based -- maximin designs, and distribution -- based uniform designs \parencite{burton2022design}.
 
 \begin{description}
   \item Latin hypercube designs (LHDs) -- Based on \textcite{mckay1992latin}'s Latin hypercube sampling, it divides the range of each factor into  bins of equal size, where $n$ also corresponds to the number of samples to be generated resulting in a total of $n^m$ combinations where $m$ is the number of factors  being considered. The $n$ samples are then randomly generated such that for all one-dimensional projections, there will be only one sample in each bin.
@@ -362,7 +340,7 @@ y=\beta_0+\sum_{i=1}^m \beta_i x_i+\sum_{i=1}^m \beta_{i i} x_i^2+\sum_{i<j} \be
 where $\beta_0, \beta_i, \beta_{i i}$, and $\beta_{i j}$ are the intercept, linear, quadratic, and bilinear (or interaction) terms, respectively, and $\epsilon$ is the error term. This model is simple and provides a straightforward way to model and understand relationships between the response variable and the factors. The main effects are easy to to interpret.  % In R the $lm$ function was used to fit this model.
 
 \subsection*{Kriging Model (km)}
-Proposed by South African geostatistician \textcite{krige1951statistical}, Kriging is one of the methods used to interpolate intermediate values, whereby these intermediate values are modeled using Gaussian Process (GP) which is governed by prior co-variances.  It provides a probabilistic prediction of the output variable, as well as an estimate of the uncertainty of the prediction \parencite{chevalier2014kriginv}. The kriging predictors interpolating the observations are assumed to be noise-free \parencite{roustant2012dicekriging}. Intermediate interpolated values obtained by Kriging are the best linear unbiased predictors. % There are two forms of fitting a kriging model:  Simple Kriging and Universal Kriging.
+Proposed by South African geostatistician \textcite{krige1951statistical}, Kriging is one of the methods used to interpolate intermediate values, whereby these intermediate values are modeled using Gaussian Process (GP) which is governed by prior co-variances. It provides a probabilistic prediction of the output variable, as well as an estimate of the uncertainty of the prediction \parencite{chevalier2014kriginv}. The kriging predictors interpolating the observations are assumed to be noise-free \parencite{roustant2012dicekriging}. Intermediate interpolated values obtained by Kriging are the best linear unbiased predictors. % There are two forms of fitting a kriging model:  Simple Kriging and Universal Kriging.
 
 %\reva{(not helpful to talk about simple kriging.)}
 %\iffalse %
@@ -380,12 +358,12 @@ Proposed by South African geostatistician \textcite{krige1951statistical}, Krigi
 % while estimating the vector $\beta:=(\beta_1, \dots,\beta_k)^\top$ on the fly. Note that in the specific case where the basis functions reduce to a unique constant function, UK is referred to as ordinary Kriging (OK) \parencite{roustant2012dicekriging}.
 % \fi
 
-The Kriging model consists of two parts: a trend and a GP. The trend part is often modeled as a regression on some fixed basis functions. In the specific case where the basis functions reduce to a constant function, it is referred to as ordinary Kriging  \parencite{roustant2012dicekriging}. Here is the general form:
+The Kriging model consists of two parts: a trend and a GP. The trend part is often modeled as a regression on some fixed basis functions. In the specific case where the basis functions reduce to a constant function, it is referred to as ordinary Kriging  \parencite{roustant2012dicekriging}. The general form is as given below
 \begin{equation}\label{eq:UK}
       Y(\x) = \sum_{i=1}^k \beta_i f_i(\x) + Z(\x),
 \end{equation}
 where $f_1, \ldots, f_k$ are $k$ basis functions, $\beta_1, \dots,\beta_k$ are corresponding regression coefficients, and  \(Z(\x)\) is a stationary GP with zero mean and covariance function \(\psi\). % that is known %and \(\epsilon \sim N(0
-The covariance function $\psi$ completely defines the behavior of the Gaussian Process $Z(\x)$. It is defined as:
+The covariance function $\psi$ completely defines the behavior of the Gaussian Process $Z(\x)$. It is defined as
 \begin{equation}
 %\resizebox{0.5\textwidth}{!}{$
 \psi\left(\x_{i},\x_{j}\right) =\operatorname{Cov} \left(Z\left(\x_{i}\right), Z\left(\x_{j}\right)\right) = \sigma^{2} \prod_{l=1}^{m} K\left(h_{l} ; \theta_{l}\right),
@@ -394,12 +372,11 @@ The covariance function $\psi$ completely defines the behavior of the Gaussian P
 where $\sigma^2$ is the scale parameter called the process variance,
 $h_l = |x_{i,l}-x_{j,l}|$, $x_{i,l}$ and $x_{j,l}$ are the $l$th elements of the $i^{th}$ run $\x_i$ and the $j^{th}$ run $\x_j$, and $K(h ; \theta)$ is the correlation function.
 %For a stationary GP, the mean and covariance remain constant with respect to time.
-The parameter $\theta_l$ chosen for the correlation function $K\left(h_{l};\theta_{l}\right)$  must be positive. Otherwise the correlation function will not be feasible.  The parameters $\theta_l$ are chosen to be physically interpretable in the same unit as the corresponding variables. They are often referred to as the  \textit{characteristic length-scales} by \textcite{rasmussen2006gaussian}. Popular correlation functions include Gaussian, Mat\'ern, and power-exponential family correlation functions. The Mat\'ern function with parameter $\nu = 5/2$ is often chosen as the default   when fitting kriging models. It is defined as:
+The parameters $\theta_l$ chosen for the correlation function $K\left(h_{l};\theta_{l}\right)$  must be positive. Otherwise the correlation function will not be feasible. These parameters are chosen to be physically interpretable in the same unit as the corresponding variables. They are often referred to as the \textit{characteristic length-scales} by \textcite{rasmussen2006gaussian}. Popular correlation functions include Gaussian, Mat\'ern, and power-exponential family correlation functions. The Mat\'ern function with parameter $\nu = 5/2$ is often chosen as the default when fitting kriging models. It is defined as:
 \begin{equation}
 K(h ; \theta)=\left(1+\frac{\sqrt{5} h}{\theta}+\frac{5 h^{2}}{3 \theta^{2}}\right) \exp \left(-\frac{\sqrt{5} h}{\theta}\right).
 \end{equation}
-The unknown parameters can be estimated via MLE or cross validation.
-We use the function \texttt{km} in the R package DiceKriging to fit this kind of model.
+The unknown parameters can be estimated via MLE or cross validation. In R, the \texttt{km} function  in the DiceKriging package was used to fit the kriging model.
 
 
 \subsection*{{Heteroskedastic Gaussian Process (HetGP)}}
@@ -409,7 +386,7 @@ Observation model is given by %\reva{(provide more details on hetGP. what is $r(
 \begin{equation}
 y_i = y\left(\x_i\right)=f\left(\x_i\right)+\varepsilon_i, \quad\varepsilon_i \sim \mathcal{N}\left(0, r\left(\x_i\right)\right),
 \end{equation}
-where $f(\x_i)$ is a GP with covariance or kernel $k(\cdot, \cdot)$ and $r(\x_i)$ is the variance of $\epsilon_i$ which depends on $\x_i$. The  kernel $k(\cdot, \cdot)$ is positive definite, with parameterized families such as the Gaussian or Mat\'ern being typical choices. If $r(\x_i)$ is a constant, then the process is homoskedastic.
+where $f(\x_i)$ is a GP with covariance or kernel $k(\cdot, \cdot)$ and $r(\x_i)$ is the variance of $\epsilon_i$ which depends on $\x_i$. The  kernel $k(\cdot, \cdot)$ is positive definite, with parameterized families such as the Gaussian or Mat\'ern being typical choices. If $r(\x_i)=\tau^2$ is a constant, then the process is homoskedastic.
 In matrix notation, the modeling framework just described is equivalent to writing
 $$
 Y \sim \mathcal{N}\left(\mathbf{0}, \mathbf{K}_n+\boldsymbol{\Sigma}_n\right),
@@ -424,7 +401,7 @@ $$
 \end{aligned}
 $$
 where $\mathbf{k}(\x)=\left(k\left(\x, \x_1\right), \ldots, k\left(\x, \x_n\right)\right)^{\top}$.
-We use the function \texttt{mleHetGP} in the R package hetGP to fit this model with the default Gaussian kernel.
+In R, the \texttt{mleHetGP} function in hetGP package is used to fit this model with the default Gaussian kernel.
 
 
 \section{The Data Generation Process}
@@ -433,7 +410,7 @@ We use the function \texttt{mleHetGP} in the R package hetGP to fit this model w
 We aim to obtain optimal DE hyperparameter settings that can be used to generate UPDs. %The objective function is the uniform projection criterion. %This is then minimized and the minimum returned as the response value.
 
 \subsection*{The Objective Function: Uniform Projection Design Criterion}
-Proposed by \textcite{sun2019uniform}, the uniform projection criterion solely focuses on  two-dimensional projections. This is due to two factor interactions being more important than three-factor or higher-order interactions. The motivation idea was that although designs with low discrepancy have good uniformity in the full-dimensional space, they can have bad projections in lower dimensional spaces, which is undesirable when only a few factors are active. Thus we prefer designs with better projection properties. \textcite{sun2019uniform} argued that the uniform projection designs scatter points uniformly in all dimensions and have good space-filling properties in terms of distance, uniformity and orthogonality.
+Proposed by \textcite{sun2019uniform}, the uniform projection criterion solely focuses on  two-dimensional projections. This is due to two factor interactions being more important than three-factor or higher-order interactions. The motivating idea was that although designs with low discrepancy have good uniformity in the full-dimensional space, they can have bad projections in lower dimensional spaces, which is undesirable when only a few factors are active. Thus designs with better projection properties are preferred. \textcite{sun2019uniform} argued that the uniform projection designs scatter points uniformly in all dimensions and have good space-filling properties in terms of distance, uniformity and orthogonality.
 
 The uniform projection design criterion is defined using the centered $L_2$-discrepancy.
 For an $n \times m$ design $D=\left(x_{i k}\right)$ with $s$ levels from $\{0, 1, \ldots, s-1 \}$, its (squared) centered $L_2$-discrepancy is defined as
@@ -460,15 +437,15 @@ The following code generates an $n\times m$ UPD with $s$ levels
 <<eval = FALSE, echo=TRUE, fig=false>>=
 UniPro(n, m, s, NP, itermax, pMut, pCR, pGBest, seed)
 @
-where {NP}, {itermax}, pMut, pCR and pGBest are DE hyperparameters described in Section 2, and {seed} is an optional seed for random number generators.
+where NP, itermax, pMut, pCR and pGBest are DE hyperparameters described in Section 2, and seed is an optional seed for random number generators that ensures reproducibility.
 
-As the task of design generation is quite complex, only 3 design sizes {are considered}.  A UPD of size $30\times3$ is considered as a small and easy task, $50\times5$ as a medium task and $70\times 7$ as a large and difficult task. We only consider the construction of designs with $s=n$ so that the resulting UPD is an LHD.
+As the task of design generation is quite complex, only 3 design sizes are considered.  A UPD of size $30\times3$ is considered as a small and easy task, $50\times5$ as a medium task and $70\times 7$ as a large and difficult task. We only consider the construction of designs with $s=n$ so that the resulting UPD is an LHD.
 
-\subsection*{{Training and testing data}}
+\subsection*{Training and testing data}
 
-Designs discussed in {Section \ref{sec:DE.designs}} are used to determine the parameter settings for the DE algorithm hyperparameters. Specifically, we construct five designs: a CCD with 43 runs (\verb|ccd3_43|), an OACD with 50 runs (\verb|oacd3_50|), 50-run random LHD, 50-run maximin LHD, and 50-run maxpro LHD. All designs have five factors, one for each hyperparameter. Each run corresponds to a setting of the five hyperparameters. The CCD and OACD have 3 levels while the three LHDs have 50 levels. The levels are linearly interpolated within the minimum and maximum factor values for each hyperparameter.
+Designs discussed in Section \ref{sec:DE.designs} are used to determine the parameter settings for the DE algorithm hyperparameters. Specifically, we construct five designs: a CCD with 43 runs (\verb|ccd3_43|), an OACD with 50 runs (\verb|oacd3_50|), 50-run random LHD, 50-run maximin LHD, and 50-run maxpro LHD. All designs have five factors, one for each hyperparameter. Each run corresponds to a setting of the five hyperparameters. The CCD and OACD have 3 levels while the rest have 50 levels. The levels are linearly interpolated within the minimum and maximum factor values for each hyperparameter. Generating the test data from the $3^5$ factorial, 243-run random LHD, and the  $4^5$ factorial seems good enough. This is because the random LHD enjoys the maximum space-filling property in all one dimensions, while the $3^5$ and $4^5$ factorial designs cover the entire 5-dimensional input space in a uniform fashion. % \parencite{shi2023evaluating}.
 
-Given the target design size $(n \times m)$ and a setting of the five hyperparameters, we ran the \texttt{UniPro} function to generate an $n \times m$ UPD and the resulting $\phi(D)$ value defined in  \eqref{upd}. This is recorded as the response value for that particular hyperparameter setting and target design size. For each setting, the DE algorithm is replicated ten times yielding ten replicates for the response. These are then aggregated to obtain the mean and the standard deviation of the response.
+Given the target design size $(n \times m)$ and a setting of the five hyperparameters, we run the \texttt{UniPro} function to generate an $n \times m$ UPD and the resulting $\phi(D)$ value defined in  \eqref{upd}. This is recorded as the response value for that particular hyperparameter setting and target design size. For each setting, the DE algorithm is replicated ten times yielding ten replicates for the response. These are then aggregated to obtain the mean and the standard deviation of the response.
 Thus we obtain five training datasets for each target size.
 
 %Due to the difference in the structure of the designs, various factor levels were employed, with each hyperparameter domain remaining as previously stated while the levels within the minimum and maximum factor values were linearly interpolated.
@@ -477,7 +454,7 @@ Thus we obtain five training datasets for each target size.
 
 The same procedure is taken to generate the testing dataset with the exception that the designs used for the hyperparameter setting combinations being a $3^5$ full factorial design, a random LHD with 243 runs, a combination of these two, and a $4^5$ full factorial design.
 
-Density plots of the response for the testing and training data are presented in Figure \ref{fig:density} for the target size $50\times 5$.  All of the distributions are skewed to the right. All designs lead to similar minimum $\phi(.)$ values, around 0.17, whereas different types of designs lead to different maximum $\phi(.)$ values. Indeed, all space filling designs have  maximum $\phi(.)$ values around 0.28, while the factorial designs and the hybrid design have a maximum $\phi(.)$ values around 0.34. The narrower range of the $\phi(.)$ values suggests that the space filling designs do not explore the entire space of hyperparameters.
+Density plots of the response for the testing and training data are presented in Figure \ref{fig:density} for the target size $50\times 5$.  All of the distributions are skewed to the right. For a $50\times5$ UPD all the training designs lead to similar minimum $\phi(.)$ values, around 0.17, whereas different types of designs lead to different maximum $\phi(.)$ values. Indeed, all space filling designs have  maximum $\phi(.)$ values around 0.28, while the factorial designs and the hybrid design have a maximum $\phi(.)$ values around 0.34. The narrower range of the $\phi(.)$ values suggests that the space filling designs do not explore the entire space of hyperparameters.
 %The space filling designs have a smaller range of the $\phi(.)$ values than the factorial designs. The maximum
 
 \begin{figure}%[!ht]
@@ -494,9 +471,7 @@ density.plot(hist = FALSE)
 
 
 \subsection*{{Model evaluation}}
-For each training dataset, we fit the three models descibed in Section \ref{sec:models} and test on the four testing datasets.
-% Once the models were fitted on the generated data, they were evaluated by testing them on the $3^5$ full factorial design (FFD), $243$ run Latin Hypercube design, a combination of $3^5$ FFD and $243$ LHD and on a $4^5$ FFD.
-Designs are evaluated by considering their ability to collect informative data for building a statistical model that specifies the relationship between the response and the hyperparameters, which is measured by the test root mean squared error (RMSE). The correlation ($\rho$) between the response and the predicted together with the RMSE are reported. Generating the test data from the $3^5$ factorial, 243-run random LHD, and the  $4^5$ factorial seems good enough. This is because the random LHD enjoys the maximum space-filling property in all one dimensions, while the $3^5$ and $4^5$ factorial designs cover the entire 5-dimensional input space in a uniform fashion. % \parencite{shi2023evaluating}.
+For each training dataset, we fit the three models descibed in Section \ref{sec:models} and test on the four testing datasets. Designs are evaluated by considering their ability to collect informative data for building a statistical model that specifies the relationship between the response and the hyperparameters, which is measured by the test root mean squared error (RMSE). The correlation ($\rho$) between the response and the predicted together with the RMSE are reported.
 
 %\clearpage
 \section{Results and Analysis}
@@ -525,10 +500,10 @@ generate_boxplots("data/up30x3")
 {Table \ref{tab:tab1}(a)(b) and Figure \ref{barplots1}(a)(b) present comparison of designs and model evaluations with target size $30\times 3$ for testing the two 243-run data sets.
 %There are various striking observations made from the analysis done. Tables 1-2 are results for the class considered as small. That is, the target size of the generated Uniform projection design is $30\times 3$.
 One striking observation is that the performance of the training data set depends on the nature of the testing data set. The  composite designs, CCD and OACD, seem to be better when tested on the $3^5$ FFD while the space filling designs (random LHD, maximin LHD, and maxpro LHD) did better when tested on the 243-run random LHD.
-As this does not give a general idea as to which designs might perform better in general, we invoke the combined data with 486 runs and the $4^5$ FFD as the testing dataset.
-Here we see that the composite designs perform better than the space filling designs; see Table \ref{tab:tab1}(c)(d) and Figure \ref{barplots1}(c)(d). The 50-run random LHD performed the worst in terms of correlation regardless of the testing data.  The correlation is strikingly low whereas the RMSE is high. This might be due to randomness, but it does show the weakness of the random LHD.} %, but the result is not replicated in the $50\times 5$ and $70\times 7$ design sizes.
+As this does not give a general idea as to which designs might perform better in general, we invoke the combined data with 486 (runs $3^5$ FFD and 243-run LHD) and the $4^5$ FFD as the testing dataset.
+Here we see that the composite designs perform better than the space filling designs; see Table \ref{tab:tab1}(c)(d) and Figure \ref{barplots1}(c)(d). The 50-run random LHD performed the worst in terms of correlation regardless of the testing data. The correlation is strikingly low whereas the RMSE is high. This might be due to randomness, but it does show the weakness of the random LHD.} %, but the result is not replicated in the $50\times 5$ and $70\times 7$ design sizes.
 
-One other bizarre observation from Table \ref{tab:tab1}(b) is the correlation of $0.03$ when using the CCD as the training design and testing it on the 243-run random LHD. This value is strikingly lower than any other values given in Table \ref{tab:tab1}. No apparent reason could be deduced as to why this is so. Multiple replications indicated that this is not an error.  From all the results, we can deduce the robustness of OACD over CCD. This gives a reason to use OACD for hyperparameter initialization.
+One bizarre observation from Table \ref{tab:tab1}(b) is the correlation of $0.03$ when using the CCD as the training design and testing it on the 243-run random LHD. This value is strikingly lower than any other values given in Table \ref{tab:tab1}. No apparent reason could be deduced as to why this is so. Multiple replications indicated that this is not an error.  From all the results, we can deduce the robustness of OACD over CCD. This gives a reason to use OACD for the hyperparameter initialization.
 
 
 
@@ -543,18 +518,18 @@ With regards to the models, there seems to be no striking observation to be made
 %Although using the $3^5$ full factorial design as the training dataset and then testing on the combined dataset, it can be noted that the Heteroskedastic Gaussian model is significantly better than both kriging and linear model. As HetGP enjoys more data points, this might be the reason of its better performance. Thus reasonable to conclude that Heterogeneous Gaussian model should be preferred even when the linear model does result in almost similar results.
 
 
-The three models have quite different assumptions. The linear model assumes a polynomial trend and independent random errors with homoskedastic variance. The Kriging model assumes a stationary covariance structure, that is, the covariance between two points in the DE hyperparameter surface structure depends only on the distance or spatial lag between those points, and not on their specific locations within the domain. The HetGP model assumes a heteroskedastic variance-covariance structure. For the DE algorithm, the homoskedastic and stationary assumptions are questionable. Due to this, the HetGP model is preferred to the linear model and the kriging model. However, the linear model is easy to interpret and fits as well as the HetGP model. We will use the linear model to determine factor importance and optimal hyperparameter settings in the next section.
+The three models have quite different assumptions. The linear model assumes a polynomial trend and independent random errors with homoskedastic variance. The Kriging model assumes a stationary covariance structure, that is, the covariance between two points in the DE hyperparameter surface structure depends only on the distance or spatial lag between those points, and not on their specific locations within the domain. The HetGP model assumes a heteroskedastic variance-covariance structure. For the DE algorithm, the homoskedastic and stationary assumptions are questionable. Due to this, the HetGP model is preferred to the linear model and the kriging model. However, the linear model is easy to interpret and fits as well as the HetGP model, and from the results, there is no striking difference between the two. We use the linear model to determine factor importance and optimal hyperparameter settings.
 
 %. On the other hand, space filling designs do not capture well the vertex/boundary information.
 
 
 Tables \ref{tab:tab2}-\ref{tab:tab3} and
 Figures \ref{barplots2}-\ref{barplots3} in the Appendix show results when the target design sizes are $50\times 5$ and $70\times7$, respectively.
-Looking at the results, apart from the random LHD with 50 runs, previously stated observations are affirmed. The composite designs perform better when tested on the $3^5$ FFD while the space filling designs perform better when tested on the 243-run LHD. When tested on the  486-run combined data and the $4^5$ FFD, the composite designs perform better than the space filling designs, although the difference tends to be small as the values are very close. In addition, there is no clear difference between the performances of the three models.
+Looking at the results, apart from the random LHD with 50 runs, previously stated observations are upheld. % The composite designs perform better when tested on the $3^5$ FFD while the space filling designs perform better when tested on the 243-run LHD. When tested on the  486-run combined data and the $4^5$ FFD, the composite designs perform better than the space filling designs, although the difference tends to be small as the values are very close. In addition, there is no clear difference between the performances of the three models.
 % indicating that perhaps in large designs, there won't be a distinction between the space filling designs and the composite designs. %This is probably because as the dimension increases, most of the space within the cube is empty, since everything is almost pushed to the boundary, hence both the space filling designs and the factorial composite designs would be expected to yield almost similar prediction results.
 
 
-A natural question is why composite designs perform better than the space filling designs. We perceive that the hyperparameters at the boundaries lead to some extreme cases in this experiment and the composite  designs do capture this phenomena while the space filling designs do not. Figure \ref{fig:distance} presents the histograms of the distances from design points to the design center for all the designs, where each column is rescaled to $[-1, 1]$ and  the Euclidean distance from each point to the center of the design is calculated. This gives an insight as to why the composite designs, OACD and CCD,  tend to perform better than the space filling designs. This is because the composite designs tend to capture information lying at the boundaries compared to the space filling designs which tend to capture the information lying at the center of the design. This is confirmed by the notion that three of the hyperparameters tend to be optimized around their highest level as discussed in the next section.
+A natural question is why composite designs perform better than the space filling designs. We perceive that the hyperparameters at the boundaries lead to some extreme cases in this experiment and the composite  designs do capture this phenomena while the space filling designs do not. Figure \ref{fig:distance} presents the histograms of the distances from design points to the design center for all the designs, where each column is rescaled to $[-1, 1]$ and  the euclidean distance from each point to the center of the design is calculated. This gives an insight as to why the composite designs, OACD and CCD, tend to perform better than the space filling designs. This is because the composite designs tend to capture information lying at the boundaries compared to the space filling designs which tend to capture the information lying at the center of the design. This is confirmed by the notion that three of the hyperparameters tend to be optimized around their highest level as discussed in the next section.
 
 
 
@@ -573,7 +548,7 @@ a=capture.output(density.plot())
 %\clearpage
 \section{Factor Importance and Optimal Settings}
 %\reva{(I've made many changes in this section. Revise as needed.)}
-The results obtain call for a deeper look into the models and how each factor is involved in the surface approximation. This enables us to have a better picture of the surface generated by the DE hyperparameters.
+The results obtain call for a deeper look into the model and how each factor is involved in the surface approximation. This enables us to have a better picture of the surface generated by the DE hyperparameters.
 
  % Variable importance assessment can be divided, generaly, into two groups: model-specific and model-agnostic/model free \parencite{biecek2021explanatory}. For linear models and many other types of models, there are methods of assessing explanatory variable's importance that exploit particular elements of the structure of the model. These are model-specific methods.
  % For instance, for linear models, the value of the normalized regression coefficient or its corresponding p-value could be used as the variable-importance measure. For tree-based ensembles, such a measure may be based on the use of a particular variable in particular trees. A great example in this respect is the variable-importance measure based on out-of-bag data for a random forest model \parencite{breiman2001random}, but there are also other approaches like methods implemented in the XgboostExplainer package \parencite{foster2017xgboostexplainer} for gradient boosting and randomForestExplainer \parencite{paluszynska2017random} for random forest.
@@ -584,13 +559,13 @@ auto.lm("data/up30x3")
 @
 
 Table \ref{table:coefficients} shows the estimated coefficients of the second-order models based on the four different training datasets: CCD, OACD, maximin LHD, and maxpro LHD, for the target size $30 \times 3$.
-Looking at the various models above, the model obtained from using the maxpro LHD  training data is the worst performing. It has the lowest adjusted $R^2$ of only $0.54$. This model does not capture important main effects. For example, it indicates that the number of iterations (itermax) for optimization is not significant. Yet this is well known to be {important}. On the other hand, the model obtained by using OACD performs the best. It has an adjusted $R^2$ of $0.87$ and captures important main effects and interactions. In addition, CCD might be a little worse than OACD because of the fewer number of points $(43)$ used for training compared to the other models which used $50$ points.
+Looking at the various models above, the model obtained using the maxpro LHD as the training data is the worst performing model. It has the lowest adjusted $R^2$ of only $0.54$. This model does not capture important main effects. For example, it indicates that the number of iterations (itermax) for optimization is not significant. Yet this is well known to be important. On the other hand, the model obtained by using OACD as the training dataset performs the best. It has an adjusted $R^2$ of $0.87$ and captures important main effects and interactions. In addition, CCD might be a little worse than OACD because of the fewer number of points $(43)$ used for training compared to the other models which used $50$ points.
 The model from the CCD does not identify any of the quadratic effects to be significant while the other models do.
 
 Looking at the corresponding p-values from the models obtained, it is evident that all five hyperparameters are important. The main effects of three hyperparameters (NP, itermax and pGBest) are very significant, whereas the several interactions involving one of the other two hyperparameters (pMut and pCR) are also very significant.
-The probability of using the global best (pGBest) is quite important because its main effect  is highly significant in all the models in Table \ref{table:coefficients}. It can also be inferred that the maximum number of iterations (itermax) and the population size (NP) are important. The linear models indicate that to minimize the objective function, it is ideal to use a larger pGBest, increase the population size (NP) and  increase the number of iterations (itermax). The population size and the number of iterations could be limited by the available budget.
+The probability of using the global best (pGBest) is quite important because its main effect is highly significant in all the models in Table \ref{table:coefficients}. It can also be inferred that the maximum number of iterations (itermax) and the population size (NP) are important. The linear models indicate that to minimize the objective function, it is ideal to use a larger pGBest, increase the population size (NP) and increase the number of iterations (itermax). The population size and the number of iterations could be constrained by the available budget.
 
-With regards to interactions, all significant interaction terms involve either pMut or pGBest. The interaction of pMut and pGBest is negative indicating an inverse relationship between the probability of mutation and probability of using the global best while the interaction between pMut and pCR is positive.
+With regards to interactions, all significant interaction terms involve either pMut or pGBest. The interaction of pMut and pGBest is negative. On the other hand, the interaction between pMut and pCR is positive. As this is a minimization problem, this positive interaction indicate that the two variables need to be either at their low levels or one has to be low while the other high. Both should not be at their high levels.
 
 
 \begin{figure}
@@ -605,8 +580,7 @@ my_interaction_plot_base2()
 
 
 %-------------------------------------------------------
-To have a better understanding of the interactions, we examine some interaction plots from the full $4^5$  factorial, shown in Figure \ref{interaction}. % It is not easy to interpret the interaction plots from the four datasets due to unequal number of replicates  determine the best levels to set for these variables.
-From the interaction plots, it is advisable to set the number of population (NP), number of iterations (itermax) and the probability of using global best (pGBest) at their highest levels, i.e., 100, 1500 and 0.95, respectively.  These results are consistent with the second order models in Table \ref{table:coefficients}, where NP, itermax and pGBest are all significant and negative. Thus they should be set at the highest level to minimize the response values. These founding are consistent for other target design sizes.  On the other hand, the interaction of the pMut and pCR is more complicated and a further analysis is called for to determine the preferred levels to set these parameters.
+To have a better understanding of the interactions, we examine some interaction plots from the full $4^5$  factorial, shown in Figure \ref{interaction}. Here, the number of population (NP), number of iterations (itermax) and the probability of using global best (pGBest) are held at their highest levels, i.e., 100, 1500 and 0.95, respectively. These results are consistent with the second order models in Table \ref{table:coefficients}, where NP, itermax and pGBest are all negative and significant. Thus they should be set at the highest level to minimize the response values. These results are consistent for other target design sizes. For pMut and pCR, their interaction is more complicated as it is positive and thus a further analysis is called for to determine the preferred levels to set these parameters. We use contour plots to visualize the two parameters when the other three are held at their highest level.
 
 %\reva{(ToDO: look at interaction plots for pMut:pCR, pMut:pGBest, pMut:itermax, pMut:NP for $4^5$ FFD. Based on the interaction plots, identify good hyperparameter settings and confirm the findings from the OACD and the second-order model.)}
 
@@ -620,26 +594,14 @@ a <- f_contours(c("ccd3_43.csv", "oacd3_50.csv"))
 \label{fig:contours}
 \end{figure}
 
-Figure \ref{fig:contours} shows the contour plots of pMut and pCR while fixing NP=100, itermax=1500 and pGBest=0.95.  From the contour plot based on CCD and target size $30\times 3$, we note that the response value could be minimized by taking a small pCR and a large pMut. % Though this is not the entire message as the stationary point observed in the $50\times5$ design point contours  denote a saddle point rather than a minimum point.
-Whereas, in the cases of target sizes $50\times5$ and $70\times 7$, the minimum could occur at the top left corner or the bottom right corner,
-which indicates that we could use a large pCR combining with  a small pMut or a small pCR combining with a large pMut. However, the contour plots based on OACD provide different recommendations.
-These results reveal that it is unlike to have a simple generic setting for pMut and pCR because these two parameters depend highly on the training dataset and also on the size of the target design. % It is clear that there does not a simple choice of pCR and pMut to optimize all cases.
-A further study focusing on pCR and pMut is needed to determine their optimal settings.
-% This contradicts the message given by other two design sizes mentioned. Thus regarding the fair settings of pMut and pCR, its inconclusive.
-
-%On the other hand, when OACD was used as the training dataset with the $30\times3$ UPD as the target dataset, we note that a local minimum is achieved around $pMut \approx \Sexpr{round(a[[c(4,1,4)]],2)}$ with $pCR \approx \Sexpr{round(a[[c(4,1,5)]],2)}$. When the target was $50\times 5$ the local minima was $pMut \approx \Sexpr{round(a[[c(5,1,4)]],2)}$ and $pCR \approx \Sexpr{round(a[[c(5,1,5)]],2)}$ while when the target was $70\times7$ the minima occured at $pMut \approx \Sexpr{round(a[[c(6,1,4)]],2)} $ and $pCR \approx \Sexpr{round(a[[c(6,1,5)]],2)}$.
-
-%\reva{
-Here we take a simple approach. Figure \ref{fig:contours} indicates that the good settings are along the diagonal line connecting the upper left corner and the lower right corner. So we search the optimal setting by simply varing pMut from $0.05, 0.15, \ldots, 0.95$ and taking pCR=1-pMut.  For each setting of pMut and pCR, we run the DE algorithm 100 times to construct 100 designs while fixing NP=100, itermax=1500 and pGBest=0.95. We obtain the average response values and determine the optimal setting of pMut and pCR for each target size.  This leads to the folllowing optimal settings of (pMut, pCR): (0.95, 0.05), (0.25, 0.75), and (0.15, 0.85), respectively, for target size $30\times3$, $50\times5$ and $70\times7$.
-%}
-
-%\reva{
-We compare the optimal settings with two DE variants (DE1 and DE4) provided by \textcite{stokes2023metaheuristic}. DE1 always uses the global best (i.e., pGBest=1), while DE4 is a hybrid version with pGBest=0.5, which randomly chooses the global best, the current agent and a random agent with probability $50$\%, $25$\%, and $25$\% for each column independently. {Both DE1 and DE4 use pMut = 0.1 and pCR = 0.5.}
-For comparison purposes, we set pMut and pCR according to the optimal settings obtained above for each target size, while keeping pGBest=0.95.  For each case, we set NP=100 and itermax=1500, and run DE algorithm 100 times to construct 100 designs for each method. Figure \ref{fig:three graphs} shows boxplots of the $\phi(\cdot)$ values of these designs. It is evident that the DE with optimal settings (DEoptim) yields significantly better uniform projection designs than two settings provided by \textcite{stokes2023metaheuristic}. The results confirm the efficiency of the hyperparameter tuning.
-%}
+Figure \ref{fig:contours} shows the contour plots of pMut and pCR while fixing NP=100, itermax=1500 and pGBest=0.95. From the contour plot based on CCD and OACD training data set, and target size $30\times 3$, we note that the response value could be minimized by taking a values over the off diagonal. Either a smaller pMut and larger pCR or a larger pMut and a smaller pCR. This is also the case for target sizes $50\times5$ and $70\times 7$. Searching the optimal setting is achieved by  varing pMut from $0.05, 0.15, \ldots, 0.95$ with fixed parameters $pCR=1-pMut$. For each setting of pMut and pCR, the DE algorithm is run $100$ times to construct $100$ designs while fixing $NP=100$, $itermax=1500$ and $pGBest=0.95$. The average response values are then calculated across these runs, allowing us to identify the optimal settings of $pMut$ and $pCR$ for each target size. This approach results in the folllowing optimal settings of $(pMut, pCR)$: $(0.95, 0.05)$, $(0.25, 0.75)$, and $(0.15, 0.85)$ for target size $30\times3$, $50\times5$ and $70\times7$ respectively
 
 
-%\reva{ToDO: Draw the predicted contour plot for pMut and pCR, based on the OACD and the second-order model with NP=100, itermax=1500 and pGBest=0.95. From which, recommend the choice of pMut and pCR. Then compare with the default settings used by \textcite{stokes2023metaheuristic}, which are  pMut=0.1 and pCR=0.5.}
+
+The optimal settings are compared with two DE variants, DE1 and DE4, described by \textcite{stokes2023metaheuristic}. DE1 uses only the global best solution (\( pGBest = 1 \)), while DE4 is a hybrid approach with \( GBest = 0.5 \), where the global best, the current agent, and a random agent are selected with probabilities of \( 0.5 \), \( 0.25 \), and \( 0.25 \), respectively, for each column independently. Both DE1 and DE4 utilize fixed values of \( pMut = 0.1 \) and \( pCR = 0.5 \).  
+
+For the comparison, the optimal settings for \( pMut\) and \( pCR \), determined for each target size, are used while maintaining \( pGBest = 0.95 \). In all cases, \( NP = 100 \) and \( itermax = 1500 \) are set, and the DE algorithm is executed 100 times to construct 100 designs for each method. Figure \ref{fig:three graphs} presents boxplots of the \( \phi(\cdot) \) values of these designs. The results demonstrate that DE with optimal settings (DEoptim) produces significantly better uniform projection designs compared to the two variants provided by \textcite{stokes2023metaheuristic}, confirming the effectiveness of hyperparameter tuning.
+
 
 
 
@@ -682,10 +644,9 @@ comparison(70, 7, 100)
 
 
 \section{Conclusion}
-{This paper compared small designs in exploring the response surface of a DE algorithm hyperparameters. We considered five numerical hyperparameters:  population size, the number of maximum  iterations, probability of crossover, probability of mutation, and probability of using the global best for mutation. Various composite designs and space-filling designs for selecting combinations of these hyperparameters were examined. We evaluated the performance of a design via building a second order model, a Kriging model and a heterogeneous GP model. The performance was measured in terms of testing RMSEs and correlation. The comparison was made based on data simulated using the uniform projection criterion. Under the settings we considered, the comparison demonstrates that OACD and CCD are the better choices than space-filling designs for exploring the response surface of the DE algorithm hyperparameters. In addition, the second-order model is simple and works as well as the Kriging model and the heterogeneous GP model. We  demonstrated the importance of tuning the DE algorithm  and provided a simple strategy on determining optimal hyperparameter settings for  constructing UPDs with different target sizes.}
+This paper compared small designs in exploring the response surface of a DE algorithm yperparameters. Five numerical hyperparameters were considered:  population size, the number of maximum iterations, probability of crossover, probability of mutation, and probability of using the global best for mutation. Various composite designs and space-filling designs for selecting combinations of these hyperparameters were also examined. The performance of a design was evaluated via building a second order model, a kriging model and a heterogeneous GP model. The performance was measured in terms of testing RMSEs and correlation. The comparison was made based on data simulated using the uniform projection criterion. Under the settings considered, the comparison demonstrates that OACD and CCD are the better choices over space-filling designs for exploring the response surface of the DE algorithm hyperparameters. In addition, the second-order model is simple and works just as well as the Kriging model and the heterogeneous GP model in this situation. The importance of tuning the DE algorithm is demonstrated and a simple strategy on determining optimal hyperparameter settings for  constructing UPDs with different target sizes is provided.
 
-While the primary goal of optimizing hyperparameters is to find an optimal hyperparameter combination that maximizes the overall performance of a learning algorithm, the present paper centers on examining the effect of various designs on the performance of hyperparameter tuning. This information is later used to determine the best hyperparamters that are then used by DE algorithm to generate UPDs. The process of obtaining the optimal hyperparameters, factor importance, whether the UPD generated is optimal and many more others  are left out for future research.
-
+While the primary goal of optimizing hyperparameters is to find an optimal hyperparameter combination that maximizes the overall performance of a learning algorithm, the paper additionally examines the impact of different design configurations on the effectiveness of hyperparameter tuning. The insights gained are subsequently used to select the best hyperparameters, which are then applied by the DE algorithm to construct UPDs.
 
 \clearpage
 %\pagebreak

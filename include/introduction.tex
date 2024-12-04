@@ -51,7 +51,7 @@ Metaheuristic algorithms are high-level problem-solving frameworks designed to f
 \subsection{Evolutionary Algorithms}
 Evolutionary algorithms are a family of optimization techniques inspired by the principles of natural evolution, such as selection, mutation, recombination or crossover, and survival of the fittest. These algorithms operate on a population of candidate solutions, iteratively improving them based on a defined fitness function. Common examples include Genetic Algorithms (GA), Differential Evolution (DE), and Evolution Strategies (ES), each with unique mechanisms for generating and selecting solutions. 
 
-\subsubsection{Genetic Algorithm (GA)}
+\subsubsection*{Genetic Algorithm (GA)}
 
 Genetic Algorithms (GAs) are search heuristics inspired by the principles of natural selection and genetics, first introduced by \textcite{holland1975introductory}. In GAs, a population of candidate solutions, called chromosomes, evolves over iterations, or generations, through processes like selection, crossover, and mutation. The algorithm aims to find an optimal or near-optimal solution to a given problem by mimicking the survival-of-the-fittest principle in biological systems \parencite{mitchell1998introduction}.
 
@@ -63,7 +63,7 @@ The GA process iterates through selection, crossover, mutation, and fitness eval
 
 However, GAs face challenges like computational cost due to their population-based nature and sensitivity to parameter settings, such as mutation rate, crossover probability, and population size. Hybrid approaches combining GAs with other optimization methods, like local search or simulated annealing, have been developed to address these issues, enhancing convergence and efficiency \parencite{michalewicz2013genetic}.
 
-\subsubsection{Differential Evolution (DE)}
+\subsubsection*{Differential Evolution (DE)}
 
 Differential Evolution (DE) is a population-based optimization algorithm introduced by \textcite{storn1997differential}, specifically designed for continuous optimization problems. Unlike GAs, DE focuses on vector differences to guide its search, making it particularly effective for high-dimensional and non-linear optimization tasks. DE is simple yet powerful, with few parameters to tune \parencite{price2006differential}.
 
@@ -77,7 +77,7 @@ Despite its effectiveness, DE may face challenges in multimodal optimization pro
 
 
 
-\subsubsection{Evolution Strategies (ES)}
+\subsubsection*{Evolution Strategies (ES)}
 Evolution Strategies (ES) are a prominent subclass of evolutionary algorithms tailored for optimizing real-valued continuous functions. Developed in the 1960s by Ingo Rechenberg and Hans-Paul Schwefel, these algorithms are inspired by natural evolution, focusing on adaptation and mutation while eschewing crossover mechanisms typical in other evolutionary approaches like Genetic Algorithms (\cite{vent1975rechenberg,schwefel1977numerische}). ES are population-based, relying on iterative cycles of mutation, selection, and reproduction to refine candidate solutions. Their robustness, simplicity, and adaptability make them particularly effective for solving high-dimensional, noisy, or non-linear optimization problems \parencite{beyer2002evolution}.
 
 The standard ES workflow begins with a population of candidate solutions, each represented as a vector of real-valued parameters. Mutation, the core variation operator, introduces randomness by perturbing these parameters using Gaussian noise. Selection mechanisms, such as \((\mu+\lambda)\) or \((\mu,\lambda)\), then choose the fittest individuals to form the next generation. While $(\mu+\lambda)$ strategies retain both parents and offspring for survival, promoting stability, \((\mu,\lambda)\) strategies consider only offspring, encouraging greater exploration of the search space \parencite{schwefel1993evolution}. These mechanisms make ES versatile in balancing exploration and exploitation.
@@ -101,13 +101,13 @@ Together, these advancements have solidified ES as a cornerstone of evolutionary
 \subsection{Swarm intelligence (SI)} 
 Swarm intelligence algorithms are optimization techniques inspired by the collective behavior of decentralized, self-organized systems in nature, such as flocks of birds, schools of fish, or ant colonies. These algorithms use the interaction of simple agents to solve complex problems without central control. Swarm intelligence models excel in parallelism, adaptability, and robustness, making them well-suited for solving optimization problems across diverse domains, including engineering, scheduling, and machine learning \parencite{kennedy1995particle}.
 
-\subsubsection{Particle Swarm Optimization (PSO)} Introduced by \textcite{kennedy1995particle}, is inspired by the flocking behavior of birds and schooling of fish. In PSO, each individual in the swarm, called a particle, represents a candidate solution. The particles explore the solution space by updating their positions based on their own best-known position, the best-known position of their neighbors, and the overall global best position. These updates are guided by two key parameters: cognitive and social components, which balance personal learning and group influence.
+\subsubsection*{Particle Swarm Optimization (PSO)} Introduced by \textcite{kennedy1995particle}, is inspired by the flocking behavior of birds and schooling of fish. In PSO, each individual in the swarm, called a particle, represents a candidate solution. The particles explore the solution space by updating their positions based on their own best-known position, the best-known position of their neighbors, and the overall global best position. These updates are guided by two key parameters: cognitive and social components, which balance personal learning and group influence.
 
 The mathematical foundation of PSO lies in velocity and position updates. A particle's velocity is influenced by three components: inertia, which maintains momentum; the cognitive term, which pulls the particle toward its own best position; and the social term, which attracts the particle toward the global best position. By iteratively updating positions and velocities, PSO achieves convergence to near-optimal solutions. Its simplicity and efficiency have made it popular for a wide range of problems, from neural network training to resource allocation \parencite{clerc2002particle}.
 
 One of the primary advantages of PSO is its ease of implementation, as it requires fewer hyperparameters compared to other optimization algorithms. However, it faces challenges such as premature convergence, especially in high-dimensional or multimodal optimization problems. Variants of PSO, such as constriction coefficient PSO and adaptive PSO, have been developed to address these limitations and improve exploration and exploitation \parencite{shi1998modified}.
 
-\subsubsection{Ant Colony Optimization (ACO)}
+\subsubsection*{Ant Colony Optimization (ACO)}
 Another prominent SI algorithm, was introduced by \textcite{dorigo1996ant} and is inspired by the foraging behavior of ants. Ants use pheromone trails to communicate and collectively find optimal paths between their nest and a food source. In ACO, artificial ants construct solutions by traversing a graph representation of the problem, depositing pheromones on paths to indicate their quality.
 
 The algorithm operates iteratively, where ants build solutions based on probabilistic rules influenced by pheromone levels and heuristic information, such as edge lengths or costs. After constructing solutions, pheromones are updated: stronger paths receive more pheromone reinforcement, while weaker paths evaporate over time. This dynamic update mechanism balances exploration of new paths and exploitation of promising ones, allowing ACO to identify optimal or near-optimal solutions \parencite{dorigo2007ant}.
