@@ -206,7 +206,7 @@ The Efficient Global Optimization (EGO) algorithm builds upon the Expected Impro
 The EGO algorithm has proven to be highly effective and is frequently used in optimization problems where the number of objective function evaluations is severely limited. It is considered as one of the reference methods for global optimization in moderate-dimensional problems (typically \(d \leq 10\)) \parencite{jones2001taxonomy}.
 
 \subsection{The Trust Region EGO (TREGO)}
-Proposed by \textcite{diouane2022trego}, Trust Region Efficient Global Optimization (TREGO) operates by searching within a dynamically adjusted trust region centered at the current best solution. The algorithm identifies new candidate points by optimizing within this region and evaluates the objective function.
+Proposed by \textcite{diouane2023trego}, Trust Region Efficient Global Optimization (TREGO) operates by searching within a dynamically adjusted trust region centered at the current best solution. The algorithm identifies new candidate points by optimizing within this region and evaluates the objective function.
 If the result is a success, the region expands, controlled by \(\alpha\). An iteration is deemed successful when there is a significant improvement on the result obtained from the current result by a margin.
 On the other hand, if poor, it contracts, controlled by \(\beta\). After each evaluation, the surrogate model is updated with the new data, and the trust region is resized accordingly. This process balances global exploration and local refinement until stopping criteria are met. The stopping criteria mostly used is the maximum iterations.
 The default values used for \(\alpha\) and \(\beta\) are $1/0.9$ and $0.9$ respectively. Algorithm \ref{alg:trego} summarizes the procedure. A forcing function is used to determine whether a search is deemed successful or not. The forcing function $\rho(\sigma)$ is a positive continuous non-decreasing function such that $\rho(\sigma) \rightarrow 0$ when $\sigma \rightarrow 0$.
@@ -334,7 +334,7 @@ This iterative process continues until a predefined stopping criterion is met, s
 The region bounding strategy is designed to leverage the fact that a well-spaced design has a high likelihood of sampling points near the optimal region. By focusing the search in the most promising areas and selectively switching to global searches when necessary, the proposed method efficiently balances exploration and exploitation. As a result, it achieves the optimal solution with fewer function evaluations compared to standard EGO and TREGO algorithms.
 
 \subsection{Difference between RSO and TREGO}
-TREGO uses EGO to do optimization within the function domain. Once a a point is obtained whose value is below the current function minimum by a given threshold, the iteration is considered to be successful. The next optimization is to run EGO  in the entire function domain. In the case of an unsuccessful iteration, the region is shrunk by a factor of beta. The shrunk region is then centered in the current function minimum, where EGO is then run. The local optimization is only done after the global iteration is unsuccessful. This is different from the RSO since in the RSO, the region is determined by the top $100\rho\%$ of the data so far used. Also the RSO reverts to the global search after an unsuccessful iteration.
+TREGO uses EGO to do optimization within the function domain. Once a point is obtained whose value is below the current function minimum by a given threshold, the iteration is considered to be successful. The next optimization is to run EGO  in the entire function domain. In the case of an unsuccessful iteration, the region is shrunk by a factor of beta. The shrunk region is then centered in the current function minimum, where EGO is then run. The local optimization is only done after the global iteration is unsuccessful. This is different from the RSO since in the RSO, the region is determined by the top $100\rho\%$ of the data so far used. Also the RSO reverts to the global search after an unsuccessful iteration.
 
 
 \section{Numerical Experiments}
@@ -505,7 +505,6 @@ grid::grid.draw(l)
 \centering
 \begin{subfigure}[b]{.3\textwidth}
 <<pdfs/box30x3>>=
-source('R/plotting.R')
 boxplots(read.table('data/results30x3.txt', header = TRUE))
 @
 \includegraphics[]{pdfs/box30x3}
@@ -514,7 +513,6 @@ boxplots(read.table('data/results30x3.txt', header = TRUE))
 \begin{subfigure}[b]{.3\textwidth}
 \centering
 <<pdfs/box50x5>>=
-source('R/plotting.R')
 boxplots(read.table('data/results50x5.txt', header = TRUE))
 @
 \includegraphics[]{pdfs/box50x5}
@@ -658,25 +656,15 @@ d <- transpose(b)
 do.call(rbind, d$lhd_1024) %>%
     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
     rename("$\\phi(\\cdot)$" = phi)%>%
-    kableExtra::kbl(format = 'latex',digits =  c(1,2,2,2,2,4), label='lhd_optim', escape = FALSE,
-    caption='Optimal hyperparameter settings for each target design with $4^5$ LHD')
+    kableExtra::kbl(format = 'latex',digits =  c(0,0,2,2,2,4), label='lhd_optim', escape = FALSE,
+    caption='Optimal hyperparameter settings for each target design with 1024-run LHD')
 
 do.call(rbind, d$full_1024)%>%
     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
     rename("$\\phi(\\cdot)$" = phi)%>%
-    kableExtra::kbl(format = 'latex',digits = c(1,2,2,2,2,4), label='grid_optim', escape = FALSE,
+    kableExtra::kbl(format = 'latex',digits = c(0,0,2,2,2,4), label='grid_optim', escape = FALSE,
     caption='Optimal hyperparameter settings for each target design with $4^5$ FFD')
 
-
-# b%>%
-#    sapply(sapply, getElement,'phi')%>%
-#    `colnames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", colnames(.)))%>%
-#    `rownames<-`(sub("(.*)_(\\d+)", "\\2 \\U\\1", perl = TRUE,
-#                     basename(rownames(.)))%>%
-#                     str_replace_all(c("1024"="$4^5$", "243"="$3^5$", FULL="FFD")))%>%
-#    t()%>%
-#    kableExtra::kable('latex', escape = FALSE, label='grid_random',
-#        caption = 'Average of 10 $\\phi(\\cdot)$ values from the optimal grid and random search methods')
 @
 
 
@@ -688,8 +676,9 @@ get_par <- function(n, m, K=100){
  s[parse_number(mn$ind),]
 }
 t(mapply(get_par, c('30x3'=30,'50x5'=50,'70x7'=70), c(3,5,7)))%>%
-     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
-    kableExtra::kbl(format = 'latex',digits = 2, escape=FALSE, label='rso_optim',
+     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>% {structure(unlist(.), dim=dim(.), dimnames = dimnames(.))} %>%
+#cbind("$Average \\phi(\\cdot)$" = mapply(\(x,y)read.table(sprintf("data/up%dx%d_%dEGO.txt",x,y, 100), col.names = '', check.names = FALSE)[[1]]|>median(), c(30,50,70), c(3,5,7)))%>%
+    kableExtra::kbl(format = 'latex',digits = c(0,0,2,2,2,4), escape=FALSE, label='rso_optim',
     caption='Optimal hyperparameter settings for each target design using RSO')
 @
 
@@ -714,21 +703,18 @@ comparison(70, 7, 100)
          \centering
          \includegraphics[width=\textwidth]{pdfs/boxplots2}
          \caption{$30\times 3$ as target}
-         %\label{fig:y equals x}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.3\textwidth}
          \centering
          \includegraphics[width=\textwidth]{pdfs/boxplots3}
          \caption{$50\times 5$ as target}
-         %\label{fig:three sin x}
      \end{subfigure}
      \hfill
      \begin{subfigure}[b]{0.3\textwidth}
          \centering
          \includegraphics[width=\textwidth]{pdfs/boxplots4}
          \caption{$70\times 7$ as target}
-         %\label{fig:five over x}
      \end{subfigure}
         \caption{Comparison of six methods for constructing UPDs}
         \label{fig:6methods}

@@ -164,9 +164,6 @@ boxplots <- function(data){
 }
 
 comparison <- function(n, m, K=50, force = FALSE){
-  n <- 70
-  m <- 7
-  K <- 100
   a<- try(read.table(sprintf("data/up%dx%d_%d.txt",n,m, K), header = TRUE), silent = TRUE)%>% suppressWarnings()
 
   if(force || inherits(a, "try-error")) {
