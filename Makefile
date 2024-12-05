@@ -5,6 +5,7 @@ chapter2 = chapters/DE/DE
 chapter3 = chapters/EGO/EGO
 chapter4 = chapters/RSO/RSO
 
+include = $(wildcard include/*)
 
 package = $(wildcard package/*)
 output = $(basename $(wildcard *.Rnw))
@@ -50,7 +51,7 @@ $(chapter4)_processed$(EXT): $(chapter4)$(EXT)
 	perl -i -pe $(pat5)"\1$(subst /,\\/,$(dir $<))\2/s" $@
 	# perl -i -pe $(pat6) $@
 
-$(output).tex: $(output).Rnw $(TARGET) 
+$(output).tex: $(output).Rnw $(TARGET) $(include)
 	Rscript -e "Sweave(commandArgs(TRUE))" $<
 	
 
