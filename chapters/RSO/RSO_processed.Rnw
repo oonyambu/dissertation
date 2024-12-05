@@ -459,7 +459,7 @@ Additionally, Figure \ref{fig:functions} shows the minimization path for differe
 We consider tuning the DE algorithm from UniPro package to generate uniform projection designs (UPDs). As the DE algorithm is stochastic, the generation is replicated 10 times and the mean of the 10 criterion values obtained. This is done to minimize variation. This is considered to be the objective function to be optimized.
 
 
-As described in Chapter 2, the DE algorithm has five hyperparameters: NP, itermax, pCR, pMut and pGBest. We use EGO, TREGO and RSO to tune DE hyperparameters. % As generating the UPDs is quite stochastic, for every factor combination, 10 replicates are obtaineed and the average of these 10 values are considered to be the function value of that particular combination.
+As described in Chapter 2, the DE algorithm has five hyperparameters: $NP$, $itermax$, $pCR$, $pMut$ and $pGBest$. We use EGO, TREGO and RSO to tune DE hyperparameters. % As generating the UPDs is quite stochastic, for every factor combination, 10 replicates are obtaineed and the average of these 10 values are considered to be the function value of that particular combination.
 Starting with a random Latin hypercube of size $5d=25$, we obtain the minimization path by sequentially adding 25 points. This is replicated 20 times. Figure \ref{fig:line_upd} shows the minimization path and Figure \ref{fig:optimal} shows the boxplots of the final optimal objective values for three methods. The RSO method tends to generally provide smaller objective values than the EGO or TREGO method.  %, along with the 2 standard error bars  at each step of the minimization path.
 
 \begin{figure}%[!ht]
@@ -564,8 +564,8 @@ corplot(70,7, TRUE)
 \label{fig:optimalpoints}
 \end{figure}
 
-We also take a look at the distribution of the optimal hyperparameter settings from the 20 replicates in Figure \ref{fig:optimalpoints} obtained from the RSO method, where NP and itermax are rescaled to [0, 1]. This determines as to whether the optimal region is the same point or we are converging to a local optimum.
-The $30 \times 3$ target design indicates that the process does not converge to the same value each time. On the other hand, from the $50 \times 5$ and $70 \times 7$ target designs, we see that the  values for NP and itermax  are concentrated at the upper vertex. Finally, from the $70 \times 7$ target design, we find out that the values for pCR and pGBest  are also  concentrated at the upper end. However, none of the target designs give information about where the probability of mutation (pMut) should lie.
+We also take a look at the distribution of the optimal hyperparameter settings from the 20 replicates in Figure \ref{fig:optimalpoints} obtained from the RSO method, where $NP$ and $itermax$ are rescaled to $[0, 1]$. This determines as to whether the optimal region is the same point or we are converging to a local optimum.
+The $30 \times 3$ target design indicates that the process does not converge to the same value each time. On the other hand, from the $50 \times 5$ and $70 \times 7$ target designs, we see that the  values for $NP$ and $itermax$  are concentrated at the upper vertex. Finally, from the $70 \times 7$ target design, we find out that the values for $pCR$ and $pGBest$  are also  concentrated at the upper end. However, none of the target designs give information about where the probability of mutation ($pMut$) should lie.
 We examine the correlations to determine as to whether there exists a two way correlation among the parameters.
 
 
@@ -599,7 +599,7 @@ corplot(70,7)
 \label{fig:correlation}
 \end{figure}
 
-From the correlation plots in Figure \ref{fig:correlation}, we do notice that  pMut is highly correlated to pCR. These two hyperparameters could be optimized simultaneously while holding the other 3 hyperparameters (NP, itermax, pGBest) at their highest level. The justification for this is due to the fact that NP and  itermax could be thought of as the budget size. For the probability of using global best, this value should be high since we would want to be as close as possible to the global minimum. Figure \ref{fig:scatter} shows the scatter plots of pMut and pCR. These two hyperparameters are intriguing as they are highly negatively correlated. % The plots are based on tuing all 5 hyperparameters.
+From the correlation plots in Figure \ref{fig:correlation}, we do notice that  $pMut$ is highly correlated to $pCR$. These two hyperparameters could be optimized simultaneously while holding the other 3 hyperparameters ($NP$, $itermax$, $pGBest$) at their highest level. The justification for this is due to the fact that $NP$ and  $itermax$ could be thought of as the budget size. For the probability of using global best, this value should be high since we would want to be as close as possible to the global minimum. Figure \ref{fig:scatter} shows the scatter plots of $pMut$ and $pCR$. These two hyperparameters are intriguing as they are highly negatively correlated. % The plots are based on tuing all 5 hyperparameters.
 
 
 \begin{figure}%[!ht]
@@ -628,16 +628,16 @@ plot(s[,3:4], xlim=c(0,1), ylim=c(0,1))
 \includegraphics{chapters/RSO/pdfs/scatter70}
 \caption{$70\times 7$}
 \end{subfigure}
-\caption{Scatter plots showing the relation between pMut and pCR}
+\caption{Scatter plots showing the relation between $pMut$ and $pCR$}
 \label{fig:scatter}
 \end{figure}
 
-Having set these three at their maximum level, an optimization is carried out on the two remaining parameters, pMut and pCR. The results obtained do not differ from the 5 hyperparameter optimization, though takes a bit longer since NP and itermax have been held at their highest level.
+Having set these three at their maximum level, an optimization is carried out on the two remaining parameters, $pMut$ and $pCR$. The results obtained do not differ from the 5 hyperparameter optimization, though takes a bit longer since $NP$ and $itermax$ have been held at their highest level.
 
 Finally, we compare the RSO method with other methods in generating UPDs.
 We consider the random search method, the grid search method, the DE1 and DE4 methods provided by \textcite{stokes2023metaheuristic}, and the DEoptim method based on the second order model in Chapter 2. The random search used a random Latin hypercube design with 1024 runs and the grid search method used a $4^5$ full factorial design. The optimal factor combinations obtained for the random search and grid search are given in Tables \ref{tab:lhd_optim} and \ref{tab:grid_optim}, respectively.
 
-DE1 always uses the global best (i.e., pGBest=1), while DE4 is a hybrid version with pGBest=0.5, which randomly chooses the global best, the current agent and a random agent with probability $50$\%, $25$\%, and $25$\% for each column independently. Both DE1 and DE4 use NP = 100, itermax = 1500, pMut = 0.1 and pCR = 0.5. The DEoptim method from Chapter 2 uses  NP = 100, itermax = 1500, pGBest = 0.95 and optimal settings of (pMut, pCR) as (0.95, 0.05), (0.25, 0.75), and (0.15, 0.85), respectively, for target size $30\times3$, $50\times5$ and $70\times7$. Table \ref{tab:rso_optim} gives the optimal hyperparameter settings obtained from  the RSO method.
+DE1 always uses the global best (i.e., $pGBest=1$), while DE4 is a hybrid version with $pGBest=0.5$, which randomly chooses the global best, the current agent and a random agent with probability $50$\%, $25$\%, and $25$\% for each column independently. Both DE1 and DE4 use $NP = 100$, $itermax = 1500$, $pMut = 0.1$ and $pCR = 0.5$. The DEoptim method from Chapter 2 uses  $NP = 100$, $itermax = 1500$, $pGBest = 0.95$ and optimal settings of ($pMut$, $pCR$) as $(0.95, 0.05),~ (0.25, 0.75)$, and $(0.15, 0.85)$, respectively, for target size $30\times3$, $50\times5$ and $70\times7$. Table \ref{tab:rso_optim} gives the optimal hyperparameter settings obtained from  the RSO method.
 
 %We generated 100 UPDs for a given target size for each method. Under the grid search method, a $4^5$ FFD with 10 replicates per factor combination was used to determine the optimal factor combination for each factor combination was generated.  This was done to reduce noise and also to match how the the function was evaluated when using EGO, TREGO and RSO methods. For the random search, the same procedure was followed though using a 1024-random LHD.
 
@@ -650,6 +650,9 @@ fn <- function(path){
     mutate(phi = rowMeans(pick(matches('X\\d'))), n=NULL, k=NULL, .keep='unused')%>%
     slice_min(phi)
 }
+phi_vals_mean <- mapply(\(x,y)colMeans(get_data(x, y, 100)), c(30,50,70), c(3,5,7))
+phi_vals_median <- mapply(\(x,y)apply(get_data(x, y, 100), 2, median), c(30,50,70), c(3,5,7))
+
 a <- list.files("data", pattern = "csv$", full.names = TRUE)
 a <- setNames(a, gsub(".*/(.*_\\d+)_.*", "\\1", a))
 b <- lapply(split(a, gsub(".*_|.csv", "", a)), lapply, fn)
@@ -657,14 +660,16 @@ d <- transpose(b)
 
 do.call(rbind, d$lhd_1024) %>%
     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
-    rename("$\\phi(\\cdot)$" = phi)%>%
-    kableExtra::kbl(format = 'latex',digits =  c(0,0,2,2,2,4), label='lhd_optim', escape = FALSE,
+    mutate(phi = phi_vals_mean['Random', ], phi2 = phi_vals_median['Random',]) %>%
+    rename("Average $\\phi(\\cdot)$" = phi, "Median $\\phi(\\cdot)$"=phi2)%>%
+    kableExtra::kbl(format = 'latex',digits =  c(0,0,2,2,2,4,4), label='lhd_optim', escape = FALSE,
     caption='Optimal hyperparameter settings for each target design with 1024-run LHD')
 
 do.call(rbind, d$full_1024)%>%
     `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>%
-    rename("$\\phi(\\cdot)$" = phi)%>%
-    kableExtra::kbl(format = 'latex',digits = c(0,0,2,2,2,4), label='grid_optim', escape = FALSE,
+    mutate(phi = phi_vals_mean['Grid', ],phi2 = phi_vals_median['Grid',]) %>%
+    rename("Average $\\phi(\\cdot)$" = phi, "Median $\\phi(\\cdot)$"=phi2) %>%
+    kableExtra::kbl(format = 'latex',digits = c(0,0,2,2,2,4, 4), label='grid_optim', escape = FALSE,
     caption='Optimal hyperparameter settings for each target design with $4^5$ FFD')
 
 @
@@ -679,8 +684,8 @@ get_par <- function(n, m, K=100){
 }
 t(mapply(get_par, c('30x3'=30,'50x5'=50,'70x7'=70), c(3,5,7)))%>%
      `rownames<-` (sub("(\\d+)x(\\d+)", "$\\1\\\\times\\2$", rownames(.)))%>% {structure(unlist(.), dim=dim(.), dimnames = dimnames(.))} %>%
-#cbind("$Average \\phi(\\cdot)$" = mapply(\(x,y)read.table(sprintf("data/up%dx%d_%dEGO.txt",x,y, 100), col.names = '', check.names = FALSE)[[1]]|>median(), c(30,50,70), c(3,5,7)))%>%
-    kableExtra::kbl(format = 'latex',digits = c(0,0,2,2,2,4), escape=FALSE, label='rso_optim',
+  cbind("Average $\\phi(\\cdot)$" = phi_vals_mean['RSO', ], "Median $\\phi(\\cdot)$"=phi_vals_median['RSO',])%>%
+    kableExtra::kbl(format = 'latex',digits = c(0,0,2,2,2,4, 4), escape=FALSE, label='rso_optim',
     caption='Optimal hyperparameter settings for each target design using RSO')
 @
 
@@ -724,7 +729,7 @@ comparison(70, 7, 100)
 
 Figure \ref{fig:6methods} indicates the advantage of using optimized methods as compared to random search or grid search. Even using 1024-runs to determine the optimal settings, the grid and random search methods perform poorly as compared to RSO and DEoptim. On the other hand, DE1 and DE4 perform the worst as these methods use arbitrary settings selected by \textcite{stokes2023metaheuristic}.
 
-Figure \ref{fig:6methods} also indicates that using the RSO as compared to the default DE1 and DE4 is highly effective when the dimension of the target design increases. This is because with increase in dimension of target design, the DE1/DE4 algorithms are still far from the optimal solution, while the RSO carries out an additional minimization which moves closer to the optimal hyperparameter settings. In addition, RSO and DEoptim have similar performance despite the use of different settings for pCR, pMut and pGBest. One advantage of using RSO over DEoptim is the notion that for DEoptim, one has to determine which design is best, to carry out the optimization. In Chapter 2, it is shown that the 50-run OACD is the best. On the other hand, RSO uses a 25-run LHD with additional 25 points for optimization. No prior knowledge of the design is needed. Furthermore, determining the optimal settings in DEoptim is quite a task when there exists significant interactions between the factors, while for RSO, the method yields the optimal settings directly.
+Figure \ref{fig:6methods} also indicates that using the RSO as compared to the default DE1 and DE4 is highly effective when the dimension of the target design increases. This is because with increase in dimension of target design, the DE1/DE4 algorithms are still far from the optimal solution, while the RSO carries out an additional minimization which moves closer to the optimal hyperparameter settings. In addition, RSO and DEoptim have similar performance despite the use of different settings for $pCR$, $pMut$ and $pGBest$. One advantage of using RSO over DEoptim is the notion that for DEoptim, one has to determine which design is best, to carry out the optimization. In Chapter 2, it is shown that the 50-run OACD is the best. On the other hand, RSO uses a 25-run LHD with additional 25 points for optimization. No prior knowledge of the design is needed. Furthermore, determining the optimal settings in DEoptim is quite a task when there exists significant interactions between the factors, while for RSO, the method yields the optimal settings directly.
 
 
 % \iffalse

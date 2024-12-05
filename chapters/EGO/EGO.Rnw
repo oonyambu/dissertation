@@ -157,7 +157,7 @@ Starting with an initial design $\X$ (typically, a Latin hypercube design), EGO 
 
 \begin{algorithm}[H]
     \caption{EGO algorithm}\label{alg:cap}
-    \begin{algorithmic}
+    \begin{algorithmic}[1]
         \Require $\X$, $f$ = function to be minimized, $n_{new}$=number of points to add
         \State Evaluate $f$ at the design points $\X$; $\y=f(\X)$
         \State Build a kriging model based on $\X$ and $\y$

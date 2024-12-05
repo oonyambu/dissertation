@@ -109,10 +109,10 @@ Without loss of generality, we assume that we want to minimize a real-valued obj
     where $a \neq b \neq c$ are randomly chosen three distinct numbers from $1,\dots, N$, and they are all different from $i$.
     \item \textbf{Crossover}:
     Crossover blends the current generation of agents with the population of potential donors in order to form candidates for the next generation known as trial agents. For each $i = 1,\dots, N$, one of the $m$ variables of $\nu_i$ is randomly selected to directly enter the trial agent $u_i$. In this way, one variable is forced to change so that each $u_i$ will
-    certainly differ from its original target $\pi_i$. Next, with probability pCR, more variables are taken from $u_i$ and placed in the trial agent. Whichever variables do not take their value from the donor inherit their original value from $\pi_i$. Assuming $j_0$ is a random number from $1, \dots, m$, this process can be written as follows: for $j = 1,\dots, m,$
+    certainly differ from its original target $\pi_i$. Next, with probability $pCR$, more variables are taken from $u_i$ and placed in the trial agent. Whichever variables do not take their value from the donor inherit their original value from $\pi_i$. Assuming $j_0$ is a random number from $1, \dots, m$, this process can be written as follows: for $j = 1,\dots, m,$
     $$
     \begin{aligned}
-    u_{ij} = \begin{cases} \nu_{ij}& \text{with probability pCR}
+    u_{ij} = \begin{cases} \nu_{ij}& \text{with probability }pCR
     \text{ or if } j= j_0,\\ \pi_{ij}& \text{otherwise}\end{cases}
     \end{aligned}
     $$
@@ -131,20 +131,20 @@ Though quite simplistic, its ability to balance exploration and exploitation mak
 
 Since experimental designs lie on a discrete and constrained space, we leverage the modified DE by \textcite{stokes2023metaheuristic}. This is to ensure that the resulting mutated design is feasible. The proposed method modifies the mutation step by using the swap mutation  \parencite{michalewicz2013genetic}, one of the structural mutation operators in genetic algorithm.  In this operator, two positions in a solution are randomly selected, and their values are exchanged. This maintains the feasibility of the solution by preserving its permutation structure while introducing variation to explore the search space. The swap mutation is computationally efficient and effective at diversifying the population, reducing the risk of premature convergence. The mutation step is controlled by mutation rate $pMut$ which is the probability of swapping two elements. In addition borrowing from PSO, they induced the influence of the global best solution with a probability $pGBest$. This yielded an algorithm which contained the following hyperparameters:
 \begin{itemize}
-    \item NP - The size of the population (N). % We consider values between $[10,  100]$
-    \item itermax -  the maximum number of iterations/generations used. % We consider values between $[500, 1500]$
-    \item pCR - Probability of crossover. %We consider values between $[0.05, 0.95]$
-    \item pMut - Probability of mutation. %We consider values between $[0.05, 0.95]$
-    \item pGBest - Probability of using the global best for mutation.
+    \item $NP$ - The size of the population (N). % We consider values between $[10,  100]$
+    \item $itermax$ -  the maximum number of iterations/generations used. % We consider values between $[500, 1500]$
+    \item $pCR$ - Probability of crossover. %We consider values between $[0.05, 0.95]$
+    \item $pMut$ - Probability of mutation. %We consider values between $[0.05, 0.95]$
+    \item $pGBest$ - Probability of using the global best for mutation.
   %  We consider values between $[0.05, 0.95]$
-    \item pSelf - Probability of using the current agent for mutation.
+    \item $pSelf$ - Probability of using the current agent for mutation.
 \end{itemize}
 
 They proposed three different choices of the initial agent to be mutated to obtain the proposal agent. This lead to three different variants which they referred to as DE1 which uses the global best, DE2 which uses the current agent and DE3 which uses a random agent.  
 
-Regarding the hypermarameters, the first two, NP and itermax, determine the budget size, whereas the other four hyperparameters affect the evolution process. The hyperparameters, pGBest and pSelf, determine the probability of using the global best and the current agent in the mutation process, respectively. There is a constraint between these two hyperparameters, that is, pGBest + pSelf $\le 1$. The question that arises is how these hyperparameters interact with each other. Also whether we can do better than the proposed fixed probabilities to obtain the better settings for the DE algorithm for design generation.
+Regarding the hypermarameters, the first two, $NP$ and $itermax$, determine the budget size, whereas the other four hyperparameters affect the evolution process. The hyperparameters, $pGBest$ and $pSelf$, determine the probability of using the global best and the current agent in the mutation process, respectively. There is a constraint between these two hyperparameters, that is, $pGBest + pSelf \le 1$. The question that arises is how these hyperparameters interact with each other. Also whether we can do better than the proposed fixed probabilities to obtain the better settings for the DE algorithm for design generation.
 
-In this study, we shall consider values between $[10,  100]$ for $NP$, $[500, 1500]$ for itermax, and $[0.05, 0.95]$ for pCR, pMut and pGBest. We fix $pSelf = (1 - pGBest)/2$ so that there is an equal chance for selecting a current agent and a random agent if the global best is not used.
+In this study, we shall consider values between $[10,  100]$ for $NP$, $[500, 1500]$ for $itermax$, and $[0.05, 0.95]$ for $pCR$, $pMut$ and $pGBest$. We fix $pSelf = (1 - pGBest)/2$ so that there is an equal chance for selecting a current agent and a random agent if the global best is not used.
 
 \section{Designs for Hyperparameter Settings}\label{sec:DE.designs}
 Various designs can be used to set the DE hyperparameters before the optimization process. As the functions optimized by DE are often complex with many local minima, one has to carefully choose the initial point for the optimization process. These initial points are determined using any of the methods discussed below. In each subsection below one method is described, and its benefits and drawbacks are discussed.
@@ -437,7 +437,7 @@ The following code generates an $n\times m$ UPD with $s$ levels
 <<eval = FALSE, echo=TRUE, fig=false>>=
 UniPro(n, m, s, NP, itermax, pMut, pCR, pGBest, seed)
 @
-where NP, itermax, pMut, pCR and pGBest are DE hyperparameters described in Section 2, and seed is an optional seed for random number generators that ensures reproducibility.
+where $NP$, $itermax$, $pMut$, $pCR$ and $pGBest$ are DE hyperparameters described in Section 2, and seed is an optional seed for random number generators that ensures reproducibility.
 
 As the task of design generation is quite complex, only 3 design sizes are considered.  A UPD of size $30\times3$ is considered as a small and easy task, $50\times5$ as a medium task and $70\times 7$ as a large and difficult task. We only consider the construction of designs with $s=n$ so that the resulting UPD is an LHD.
 
@@ -559,13 +559,13 @@ auto.lm("data/up30x3")
 @
 
 Table \ref{table:coefficients} shows the estimated coefficients of the second-order models based on the four different training datasets: CCD, OACD, maximin LHD, and maxpro LHD, for the target size $30 \times 3$.
-Looking at the various models above, the model obtained using the maxpro LHD as the training data is the worst performing model. It has the lowest adjusted $R^2$ of only $0.54$. This model does not capture important main effects. For example, it indicates that the number of iterations (itermax) for optimization is not significant. Yet this is well known to be important. On the other hand, the model obtained by using OACD as the training dataset performs the best. It has an adjusted $R^2$ of $0.87$ and captures important main effects and interactions. In addition, CCD might be a little worse than OACD because of the fewer number of points $(43)$ used for training compared to the other models which used $50$ points.
+Looking at the various models above, the model obtained using the maxpro LHD as the training data is the worst performing model. It has the lowest adjusted $R^2$ of only $0.54$. This model does not capture important main effects. For example, it indicates that the number of iterations ($itermax$) for optimization is not significant. Yet this is well known to be important. On the other hand, the model obtained by using OACD as the training dataset performs the best. It has an adjusted $R^2$ of $0.87$ and captures important main effects and interactions. In addition, CCD might be a little worse than OACD because of the fewer number of points $(43)$ used for training compared to the other models which used $50$ points.
 The model from the CCD does not identify any of the quadratic effects to be significant while the other models do.
 
-Looking at the corresponding p-values from the models obtained, it is evident that all five hyperparameters are important. The main effects of three hyperparameters (NP, itermax and pGBest) are very significant, whereas the several interactions involving one of the other two hyperparameters (pMut and pCR) are also very significant.
-The probability of using the global best (pGBest) is quite important because its main effect is highly significant in all the models in Table \ref{table:coefficients}. It can also be inferred that the maximum number of iterations (itermax) and the population size (NP) are important. The linear models indicate that to minimize the objective function, it is ideal to use a larger pGBest, increase the population size (NP) and increase the number of iterations (itermax). The population size and the number of iterations could be constrained by the available budget.
+Looking at the corresponding p-values from the models obtained, it is evident that all five hyperparameters are important. The main effects of three hyperparameters ($NP$, $itermax$ and $pGBest$) are very significant, whereas the several interactions involving one of the other two hyperparameters ($pMut$ and $pCR$) are also very significant.
+The probability of using the global best ($pGBest$) is quite important because its main effect is highly significant in all the models in Table \ref{table:coefficients}. It can also be inferred that the maximum number of iterations ($itermax$) and the population size ($NP$) are important. The linear models indicate that to minimize the objective function, it is ideal to use a larger $pGBest$, increase the population size ($NP$) and increase the number of iterations ($itermax$). The population size and the number of iterations could be constrained by the available budget.
 
-With regards to interactions, all significant interaction terms involve either pMut or pGBest. The interaction of pMut and pGBest is negative. On the other hand, the interaction between pMut and pCR is positive. As this is a minimization problem, this positive interaction indicate that the two variables need to be either at their low levels or one has to be low while the other high. Both should not be at their high levels.
+With regards to interactions, all significant interaction terms involve either $pMut$ or $pGBest$. The interaction of $pMut$ and $pGBest$ is negative. On the other hand, the interaction between $pMut$ and $pCR$ is positive. As this is a minimization problem, this positive interaction indicate that the two variables need to be either at their low levels or one has to be low while the other high. Both should not be at their high levels.
 
 
 \begin{figure}
@@ -574,15 +574,15 @@ With regards to interactions, all significant interaction terms involve either p
 my_interaction_plot_base2()
 @
 \includegraphics[width=0.95\textwidth]{pdfs/interactions}
-\caption{Interaction plots involving pMut based on the $4^5$ FFD and target size $30\times3$.}
+\caption{Interaction plots involving $pMut$ based on the $4^5$ FFD and target size $30\times3$.}
 \label{interaction}
 \end{figure}
 
 
 %-------------------------------------------------------
-To have a better understanding of the interactions, we examine some interaction plots from the full $4^5$  factorial, shown in Figure \ref{interaction}. Here, the number of population (NP), number of iterations (itermax) and the probability of using global best (pGBest) are held at their highest levels, i.e., 100, 1500 and 0.95, respectively. These results are consistent with the second order models in Table \ref{table:coefficients}, where NP, itermax and pGBest are all negative and significant. Thus they should be set at the highest level to minimize the response values. These results are consistent for other target design sizes. For pMut and pCR, their interaction is more complicated as it is positive and thus a further analysis is called for to determine the preferred levels to set these parameters. We use contour plots to visualize the two parameters when the other three are held at their highest level.
+To have a better understanding of the interactions, we examine some interaction plots from the full $4^5$  factorial, shown in Figure \ref{interaction}. Here, the number of population ($NP$), number of iterations ($itermax$) and the probability of using global best ($pGBest$) are held at their highest levels, i.e., 100, 1500 and 0.95, respectively. These results are consistent with the second order models in Table \ref{table:coefficients}, where $NP$, $itermax$ and $pGBest$ are all negative and significant. Thus they should be set at the highest level to minimize the response values. These results are consistent for other target design sizes. For $pMut$ and $pCR$, their interaction is more complicated as it is positive and thus a further analysis is called for to determine the preferred levels to set these parameters. We use contour plots to visualize the two parameters when the other three are held at their highest level.
 
-%\reva{(ToDO: look at interaction plots for pMut:pCR, pMut:pGBest, pMut:itermax, pMut:NP for $4^5$ FFD. Based on the interaction plots, identify good hyperparameter settings and confirm the findings from the OACD and the second-order model.)}
+%\reva{(ToDO: look at interaction plots for $pMut$:$pCR$, $pMut$:$pGBest$, $pMut$:$itermax$, $pMut$:$NP$ for $4^5$ FFD. Based on the interaction plots, identify good hyperparameter settings and confirm the findings from the OACD and the second-order model.)}
 
 \begin{figure}
 \centering
@@ -590,11 +590,11 @@ To have a better understanding of the interactions, we examine some interaction 
 a <- f_contours(c("ccd3_43.csv", "oacd3_50.csv"))
 @
 \includegraphics[height=10cm, width=\textwidth]{pdfs/contours}
-\caption{Contour plots of pMut and pCR while fixing other hyperparameters at high levels. Top row uses CCD as the training data; bottom row uses OACD as training data.}
+\caption{Contour plots of $pMut$ and $pCR$ while fixing other hyperparameters at high levels. Top row uses CCD as the training data; bottom row uses OACD as training data.}
 \label{fig:contours}
 \end{figure}
 
-Figure \ref{fig:contours} shows the contour plots of pMut and pCR while fixing NP=100, itermax=1500 and pGBest=0.95. From the contour plot based on CCD and OACD training data set, and target size $30\times 3$, we note that the response value could be minimized by taking values over the off diagonal. Either a smaller pMut and larger pCR or a larger pMut and a smaller pCR. This is also the case for target sizes $50\times5$ and $70\times 7$. Searching the optimal setting is achieved by  varing pMut from $0.05, 0.15, \ldots, 0.95$ with fixed parameters $pCR=1-pMut$. For each setting of pMut and pCR, the DE algorithm is run $100$ times to construct $100$ designs while fixing $NP=100$, $itermax=1500$ and $pGBest=0.95$. The average response values are then calculated across these runs, allowing us to identify the optimal settings of $pMut$ and $pCR$ for each target size. This approach results in the folllowing optimal settings of $(pMut, pCR)$: $(0.95, 0.05)$, $(0.25, 0.75)$, and $(0.15, 0.85)$ for target size $30\times3$, $50\times5$ and $70\times7$ respectively.
+Figure \ref{fig:contours} shows the contour plots of $pMut$ and $pCR$ while fixing $NP=100$, $itermax=1500$ and $pGBest$=0.95. From the contour plot based on CCD and OACD training data set, and target size $30\times 3$, we note that the response value could be minimized by taking values over the off diagonal. Either a smaller $pMut$ and larger $pCR$ or a larger $pMut$ and a smaller $pCR$. This is also the case for target sizes $50\times5$ and $70\times 7$. Searching the optimal setting is achieved by  varing $pMut$ from $0.05, 0.15, \ldots, 0.95$ with fixed parameters $pCR=1-pMut$. For each setting of $pMut$ and $pCR$, the DE algorithm is run $100$ times to construct $100$ designs while fixing $NP=100$, $itermax=1500$ and $pGBest=0.95$. The average response values are then calculated across these runs, allowing us to identify the optimal settings of $pMut$ and $pCR$ for each target size. This approach results in the folllowing optimal settings of $(pMut,~~ pCR)$: $(0.95, 0.05)$, $(0.25, 0.75)$, and $(0.15, 0.85)$ for target size $30\times3$, $50\times5$ and $70\times7$ respectively.
 
 
 

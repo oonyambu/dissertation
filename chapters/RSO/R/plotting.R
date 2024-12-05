@@ -163,25 +163,29 @@ boxplots <- function(data){
   data%>% slice_max(nstep)%>%select(y,method)%>%unstack()%>%boxplot()
 }
 
-comparison <- function(n, m, K=50, force = FALSE){
-  a<- try(read.table(sprintf("data/up%dx%d_%d.txt",n,m, K), header = TRUE), silent = TRUE)%>% suppressWarnings()
-
-  if(force || inherits(a, "try-error")) {
-    s <- read.table(sprintf("data/results%dx%d_par.txt", n, m), header = TRUE)
-    v <- read.table(sprintf("data/results%dx%d.txt", n, m), h=TRUE)
-    mn <- slice_min(subset(v, method == 'RSO'), values,with_ties = FALSE)
-    par <- s[parse_number(mn$ind),]
-    opt <- replicate(K,
-                     do.call(Meta4Design::UniPro, as.list(c(n=n, m=m, par)))[[1]])
-    cat(opt, file=sprintf("data/up%dx%d_%dEGO.txt",n,m, K), sep="\n")
-  }
-  c(read.table(sprintf("data/up%dx%d_%d.txt",n,m, K), header = TRUE),#[-3],
-    RSO=read.table(sprintf("data/up%dx%d_%dEGO.txt",n,m, K),
-                   col.names = '', check.names = FALSE),
-    grid= list(unlist(read.table(sprintf("data/grid/1024_%dx%d.txt",n,m)), use.names = FALSE)),
-    Random = list(unlist(read.table(sprintf("data/random/1024_%dx%d.txt",n,m)),  use.names = FALSE))
-      )%>%
-    boxplot()
+get_data <- function(n, m, K=100){
+  cbind(read.table(sprintf("data/up%dx%d_%d.txt", n, m, K),
+                   header = TRUE),
+        read.table(sprintf("data/up%dx%d_%dEGO.txt",  n, m, K),
+                   col.names = "RSO"),
+        read.table(sprintf("data/grid/1024_%dx%d.txt", n, m),
+                   col.names = "Grid"),
+        read.table(sprintf("data/random/1024_%dx%d.txt", n, m),
+                   col.names = "Random"))
+}
+comparison <- function(n, m, K=100, force = FALSE){
+  # a<- try(read.table(sprintf("data/up%dx%d_%d.txt",n,m, K), header = TRUE), silent = TRUE)%>% suppressWarnings()
+  #
+  # if(force || inherits(a, "try-error")) {
+  #   s <- read.table(sprintf("data/results%dx%d_par.txt", n, m), header = TRUE)
+  #   v <- read.table(sprintf("data/results%dx%d.txt", n, m), h=TRUE)
+  #   mn <- slice_min(subset(v, method == 'RSO'), values,with_ties = FALSE)
+  #   par <- s[parse_number(mn$ind),]
+  #   opt <- replicate(K,
+  #                    do.call(Meta4Design::UniPro, as.list(c(n=n, m=m, par)))[[1]])
+  #   cat(opt, file=sprintf("data/up%dx%d_%dEGO.txt",n,m, K), sep="\n")
+  # }
+  boxplot(get_data(n, m, K))
 }
 
 corplot <- function(n, m, point=FALSE, return_s=FALSE){
