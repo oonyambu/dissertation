@@ -8,7 +8,7 @@
 %\usepackage{subcaption}
 %\usepackage[margin=2cm]{geometry}
 %\usepackage[style=authoryear, sorting=nyt, backend=bibtex, sortcites=true]{biblatex}
-%\addbibresource{reference.bib}
+%\addbibresource{../../include/reference.bib}
 %
 %\usepackage{fullpage}
 %\renewcommand{\baselinestretch}{1.25}% {1.25}

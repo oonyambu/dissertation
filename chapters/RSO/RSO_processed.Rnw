@@ -16,7 +16,7 @@
 %\usepackage{makecell}
 %\usepackage[hidelinks,citecolor=blue, colorlinks]{hyperref}
 %\usepackage[style=authoryear, sorting=nyt, backend=bibtex,sortcites=true]{biblatex}
-%\addbibresource{reference.bib}
+%\addbibresource{../../include/reference.bib}
 %
 %\hypersetup{colorlinks,linkcolor={blue},citecolor={blue},urlcolor={red}}
 %

@@ -67,7 +67,7 @@
          \normalsize Los Angeles \\
          \parbox[c][270pt][c]{\textwidth}{
              \begin{center}
-             \@titlesize \Large \@title
+             \@titlesize \@title
                  \end{center}
          }
          \normalsize A \@thesisname\
@@ -183,7 +183,7 @@
    \ColumnSave
    \noindent
    \renewcommand\baselinestretch{\@doublespacing}\@normalsize
-   \normalsize \normalfont The \@thesisname\ of \@author\ is approved by
+   \normalsize \normalfont The \@thesisname\ of \@author\ is approved.
    
    {\centering
       \ifnum\c@members>5 \@signatureline{\@memberF}\fi
